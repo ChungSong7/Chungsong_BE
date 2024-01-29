@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class SingosConfig(AppConfig):
+class ComplainsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'singos'
+    name = 'complains'
