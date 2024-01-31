@@ -10,8 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-vn=x5wpm&*sgju6l*i(t7kjon(7hm!=^yd(x(w5ed72^e#7ry2'
+
 from pathlib import Path
 import os
+
+BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
+MEDIA_URL='/media/'
+MEDIA_ROOT=os.path.join(BASE_DIR,'media')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,8 +33,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-vn=x5wpm&*sgju6l*i(t7kjon(7hm!=^yd(x(w5ed72^e#7ry2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -49,10 +54,12 @@ INSTALLED_APPS = [
     'posts',
     'comments',
     'complains',
+    'corsheaders',
 
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -112,6 +119,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK={
+    'EXCEPTION_HANDLER': 'users.exceptions.status_code_handler',
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
@@ -130,7 +141,17 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+
+AUTH_USER_MODEL='users.User'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8000',
+    'http://localhost:3000',
+    # 다른 허용할 Origin들도 필요한 경우 추가
+]
+CORS_ALLOW_CREDENTIALS=True #쿠키나 인증정보 넣을 수 있게 허용
