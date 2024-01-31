@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer
 from .models import User
 from .authentications import create_access_token,create_refresh_token,decode_access_token,decode_refresh_token
+import re
 
 #from django.contrib.auth import logout
 
@@ -81,8 +82,8 @@ class UserInfoView(APIView):
             token=auth[1].decode('utf-8') #토큰 추출
             user_id=decode_access_token(token) #토큰에서 유저 고유번호 추출
             try:
-                user = User.objects.get(user_id=user_id)
-            except User.DoesNotExist:
+                user = User.objects.get(user_id=user_id)  
+            except User.DoesNotExist:   #User.objects.get() 메서드는 DoesNotExist 예외를 발생시킵!!
                 raise AuthenticationFailed('User not found')
             
             password = request.data.get('password', None)
@@ -118,4 +119,22 @@ class LogoutView(APIView):
         response=Response({'message':'logout success'})
         response.delete_cookie(key='refresh_token')
         return response
+    
+#회원가입 - 별명 중복 검사
+class NickDupCheckView(APIView):
 
+    def is_korean_only(self, text):
+        return bool(re.match('^[\uac00-\ud7a3]+$', text))
+    
+    def get(self, request):
+        nickname=request.GET.get('nickname', None)
+        print(nickname)
+        if not nickname:
+            return Response({'error': 'please input nickname'}, status=status.HTTP_400_BAD_REQUEST)
+        if self.is_korean_only(nickname):
+            try:
+                User.objects.get(nickname=nickname) #get이 객체 없으면 얘외 발생 시켜주는 애라서 ㄱㅊ
+                return Response({'message':'The nickname is already taken'})
+            except User.DoesNotExist:
+                return Response({'message':'The nickname is available for use'})
+        return Response({"message":"Nickname should be Korean without spaces"})
