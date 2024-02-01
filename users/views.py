@@ -59,7 +59,7 @@ class LoginView(APIView):
         #return Response(serializer.data)
         
 
-#유저정보 조회,삭제 API
+#jwt 유저정보 조회,삭제 API
 class UserInfoView(APIView):
 
     #유저정보 조회
@@ -138,3 +138,33 @@ class NickDupCheckView(APIView):
             except User.DoesNotExist:
                 return Response({'message':'The nickname is available for use'})
         return Response({"message":"Nickname should be Korean without spaces"})
+
+
+class UserMatchingView(APIView):
+    def get(self, request):
+        # 이름과 호실을 받아서 이메일 반환
+        username = request.query_params.get('username')
+        room = request.query_params.get('room')
+        try:
+            user = User.objects.get(username=username, room=room)
+            email=user.email
+
+            #email mask
+            email_id, domain = email.split('@')
+            masked_email_id = email_id[:4] + '*' * (len(email_id) - 4)
+            masked_email = masked_email_id + '@' + domain
+
+            return Response({'message':'조회 성공','masked_email': masked_email})
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=404)
+    
+    def post(self, request):
+        # 이름, 호실, 이메일을 받아서 유저의 존재 여부 확인
+        username = request.data.get('username')
+        room = request.data.get('room')
+        email = request.data.get('email')
+        try:
+            user = User.objects.get(username=username, room=room, email=email)
+            return Response({'message': 'User found'})
+        except User.DoesNotExist:
+            return Response({'message': 'User not found'}, status=404)
