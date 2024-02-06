@@ -128,6 +128,8 @@ class NickDupCheckView(APIView):
         if not nickname:
             return Response({'error': 'please input nickname'}, status=status.HTTP_400_BAD_REQUEST)
         if bool(re.match('^[\uac00-\ud7a3]+$', nickname)):
+            if len(nickname)>7:
+                return Response({'message':'must be less than 8 characters long'})
             try:
                 User.objects.get(nickname=nickname) #get이 객체 없으면 얘외 발생 시켜주는 애라서 ㄱㅊ
                 return Response({'message':'The nickname is already taken'})
