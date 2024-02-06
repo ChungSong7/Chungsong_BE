@@ -49,3 +49,4 @@ def extract_user_from_jwt(request):
             user_id=decode_access_token(token) #토큰에서 유저 고유번호 추출
             user=get_object_or_404(User,user_id=user_id)
             return user
+    return exceptions.AuthenticationFailed('unauthenticated')
