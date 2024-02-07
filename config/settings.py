@@ -24,10 +24,6 @@ MEDIA_ROOT=os.path.join(BASE_DIR,'media')
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-#이미지 파일 저장 경로
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 
 
 # Quick-start development settings - unsuitable for production
@@ -51,11 +47,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'users',
+    'administrators',
     'posts',
     'comments',
     'complains',
     'corsheaders',
-
 ]
 
 MIDDLEWARE = [
