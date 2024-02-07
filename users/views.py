@@ -128,6 +128,8 @@ class NickDupCheckView(APIView):
         if not nickname:
             return Response({'error': 'please input nickname'}, status=status.HTTP_400_BAD_REQUEST)
         if bool(re.match('^[\uac00-\ud7a3]+$', nickname)):
+            if len(nickname)>7:
+                return Response({'message':'must be less than 8 characters long'})
             try:
                 User.objects.get(nickname=nickname) #get이 객체 없으면 얘외 발생 시켜주는 애라서 ㄱㅊ
                 return Response({'message':'The nickname is already taken'})
@@ -160,58 +162,3 @@ class UserMatchingView(APIView):
         # 이름, 호실, 이메일을 받아서 유저의 존재 여부 확인
         else:
             return Response({'message': 'User not found'}, status=404)
-
-
-class ChangeCredentialsView(APIView):
-
-    #authentication_classes = [JWTAuthentication]
-    #permission_classes = [IsAuthenticated]  얘네 꼭 필요한 지 잘 모르겠음
-    def patch(self, request):    
-        serializer = UserExistenceCheckSerializer(data=request.data)
-        if serializer.is_valid():
-            # 시리얼라이저의 validate 메서드를 통해 유저의 존재 여부 확인
-            user = serializer.validated_data
-            print(type(user))
-            print(user)
-            return Response({'message': '유저가 존재합니다.'}, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
-        
-
-        new_email = request.data.get('new_email')
-        password = request.data.get('password')
-        print(password)
-        password_confirm = request.data.get('password_confirm')
-        print(password_confirm)
-
-        #email 변경 요청 처리
-        if new_email:
-            print(6)
-            if user.email!=new_email:
-                print(7)
-                old_email=user.email
-                user.email = new_email #이메일 변경
-                user.save()
-                return Response({"message":old_email+" -> "+new_email+"로 이메일 변경 완료"})
-            else:
-                return Response({"error":"기존 email과 다른 email을 입력해주세요. "})
-
-        # 비밀번호 변경 요청 처리
-        elif password and password_confirm:
-            #비밀번호 10자리 조건 확인
-            if len(password) < 10 or len(password_confirm) < 10:
-                return Response({'error':'비밀번호는 10자 이상이어야 합니다.'})
-            #비밀번호 요구조건 확인
-            if not re.match(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{10,}$', password):
-                return Response({'error':'비밀번호는 영문, 숫자, 특수문자를 각각 한 개 이상 포함하여야 합니다.'})
-            #새로운 비밀번호가 일치하는지 확인
-            if password != password_confirm:
-                return Response({'error': '비밀번호와 비밀번호 확인이 일치하지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
-            #기존 비밀번호랑 같은지? 
-            if make_password(password) == user.password:
-                return Response({'error':'기존 비밀번호와 다른 비밀번호를 입력하세요.'})
-            else:
-                user.set_password(password) #해싱 저장
-                user.save()
-                return Response({'message':'비밀번호가 변경되었습니다.'})
-        return Response({'message':'뭣도 아님'})

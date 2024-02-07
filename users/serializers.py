@@ -85,8 +85,10 @@ class UserUpdateSerializer(serializers.Serializer):
 
         if new_email and password:
             raise serializers.ValidationError("email, password 하나만 입력하세요(근데 이거 일어날 일 X 예외)")
-        if new_email:
+        elif new_email:
             # 이메일 변경 요청일 때 유효성 검사
+            if User.objects.filter(email=new_email).exists():
+                raise serializers.ValidationError("입력한 이메일은 이미 사용 중입니다. 다른 이메일을 입력해주세요.")
             if new_email and user.email == new_email:
                 raise serializers.ValidationError("새 이메일은 현재 이메일과 다르게 입력해야 합니다.")
         elif password and password_confirm:
@@ -97,9 +99,10 @@ class UserUpdateSerializer(serializers.Serializer):
                 raise serializers.ValidationError("비밀번호는 영문, 숫자, 특수문자를 각각 한 개 이상 포함하여야 합니다.")
             if password != password_confirm:
                 raise serializers.ValidationError("비밀번호와 비밀번호 확인이 일치하지 않습니다.")
-            if make_password(password) == user.password:
+            if check_password(password,user.password):
                 raise serializers.ValidationError("기존 비밀번호와 다른 비밀번호를 입력하세요.")
-
+        else: 
+            raise serializers.ValidationError('입력 조건이 맞지 않습니다.')
         return data
 
     def update(self, instance, validated_data):
