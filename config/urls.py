@@ -25,7 +25,6 @@ urlpatterns = [
     path('users/',include('users.urls')),
     path('administrators/', include('administrators.urls')),
     path('boards/',include('boards.urls')),
-    #path('posts/',include('posts.urls')),
     #path('comments/',include('comments.urls')),
     #path('complains/',include('complains.urls')),
 ]

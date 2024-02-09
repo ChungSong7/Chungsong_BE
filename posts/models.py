@@ -17,7 +17,7 @@ class Post(models.Model):
     like_size = models.IntegerField(verbose_name='좋아요수',default=0)
     warn_size = models.IntegerField(verbose_name='신고수',default=0)
     anon_status = models.BooleanField(verbose_name='익명여부',default=True)
-    display=models.BooleanField(verbose_name='삭제여부',default=False)
+    display=models.BooleanField(verbose_name='사용자화면',default=True)
 
     def __str__(self):
         return str(f"({self.board.board_name}: {self.post_id})")

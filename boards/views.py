@@ -6,7 +6,7 @@ from .models import Board
 from .serializers import BoardSerializer
 
 from posts.models import Post
-from posts.serializers import PostDetailSerializer
+from posts.serializers import PostSerializer
 
 
 #게시판 종류 list 조회
@@ -18,8 +18,9 @@ class BoardView(APIView):
 
 
 class BoardPostsView(generics.ListAPIView):
-    serializer_class = PostDetailSerializer
+    serializer_class = PostSerializer
+    
     #게시판 별 게시글 list 조회
     def get_queryset(self):
         board_id = self.kwargs['board_id']  # URL에서 전달된 board_id를 가져옴
-        return Post.objects.filter(board_id=board_id)
+        return Post.objects.filter(board_id=board_id,display=True)
