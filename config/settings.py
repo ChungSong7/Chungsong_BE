@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'administrators',
     'boards',
     'posts',
-    #'comments',
+    'comments',
     #'complains',
     'corsheaders',
 ]

@@ -1,3 +1,8 @@
 from django.contrib import admin
+from posts.models import Comment
 
-# Register your models here.
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ['comment_id', 'post', 'content', 'created_at', 'anon_status',
+                'commenter', 'like_size', 'warn_size','display']

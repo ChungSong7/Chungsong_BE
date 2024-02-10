@@ -29,6 +29,13 @@ class Image(models.Model):
     def __str__(self):
         return str(f"{self.post} \n {self.id}")
     
+#게시글 좋아하는 사람
+class PostLiker(models.Model):
+    postliker_id=models.UUIDField(verbose_name='liker 고유번호', primary_key=True, default=uuid.uuid4, unique=True, editable=False)
+    post = models.ForeignKey(Post, verbose_name='게시글',on_delete=models.CASCADE, related_name='likers')
+    user = models.ForeignKey(User, verbose_name='좋아요 누른 유저', on_delete=models.SET_NULL,null=True, related_name ='like_posts')
+    
+    
 #댓글
 class Comment(models.Model):
     comment_id=models.UUIDField(verbose_name='댓글ID', primary_key=True, default=uuid.uuid4, unique=True, editable=False)
@@ -40,6 +47,13 @@ class Comment(models.Model):
     warn_size = models.IntegerField(verbose_name='신고수',default=0)
     anon_status = models.BooleanField(verbose_name='익명여부',default=True)
     display=models.BooleanField(verbose_name='사용자화면',default=True)
+
+#게시글 좋아하는 사람
+class CommentLiker(models.Model):
+    commentliker_id=models.UUIDField(verbose_name='liker 고유번호', primary_key=True, default=uuid.uuid4, unique=True, editable=False)
+    comment = models.ForeignKey(Comment, verbose_name='댓글',on_delete=models.CASCADE, related_name='likers')
+    user = models.ForeignKey(User, verbose_name='좋아요 누른 유저', on_delete=models.SET_NULL,null=True, related_name ='like_comments')
+    
 
 #댓쓴이 (for 익명번호 부여)
 class Commenter(models.Model):

@@ -9,8 +9,3 @@ class PostAdmin(admin.ModelAdmin):
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
     list_display=['post','id','imgfile']
-
-@admin.register(Comment)
-class CommentAdmin(admin.ModelAdmin):
-    list_display = ['comment_id', 'post', 'content', 'created_at', 'anon_status',
-                'commenter', 'like_size', 'warn_size','display']
