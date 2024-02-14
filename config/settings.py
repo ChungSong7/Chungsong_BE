@@ -48,9 +48,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'users',
     'administrators',
+    'boards',
     'posts',
     'comments',
-    'complains',
+    #'complains',
     'corsheaders',
 ]
 
