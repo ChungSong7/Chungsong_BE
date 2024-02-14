@@ -4,6 +4,7 @@ from rest_framework.response import Response
 
 from .models import Board
 from .serializers import BoardSerializer
+from .permissions import IsOkayBlockedPatch
 
 from posts.models import Post
 from posts.serializers import PostSerializer
@@ -18,6 +19,7 @@ class BoardView(APIView):
 
 
 class BoardPostsView(generics.ListAPIView):
+    permission_classes=[IsOkayBlockedPatch]
     serializer_class = PostSerializer
     
     #게시판 별 게시글 list 조회

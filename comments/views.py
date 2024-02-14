@@ -1,5 +1,6 @@
-from rest_framework.generics import CreateAPIView,RetrieveUpdateDestroyAPIView,ListAPIView,UpdateAPIView
+from rest_framework.generics import CreateAPIView,RetrieveUpdateDestroyAPIView,UpdateAPIView,ListAPIView
 from rest_framework import status
+from rest_framework.views import APIView
 #from rest_framework.permissions import IsAuthenticated
 from .serializers import CommentSerializer
 from users.authentications import extract_user_from_jwt
@@ -7,20 +8,32 @@ from django.shortcuts import get_object_or_404
 from posts.models import Post,Commenter,Comment,CommentLiker
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
+from posts.views import is_exist
+from boards.permissions import IsOkayBlockedPatch,IsOkayLike
 
 #GET 댓글list 조회  // POST 댓글쓰기
-class CommentView(CreateAPIView,ListAPIView):
-    serializer_class = CommentSerializer
+class CommentView(ListAPIView,CreateAPIView):
 
+    permission_classes=[IsOkayBlockedPatch]
+    serializer_class = CommentSerializer
+    
     #GET 게시글 별 댓글list 조회
-    def get_queryset(self):
-        post_id=self.kwargs['post_id']# URL에서 전달된 post_id를 가져옴
-        return Comment.objects.filter(post_id=post_id,display=True)
+    def get(self, request, post_id, *args, **kwargs):
+        response = is_exist(request)
+        if response:
+            return response  # 오류 응답이 반환되었을 때 바로 반환
+        # 나머지 로직
+        queryset = Comment.objects.filter(post_id=post_id, display=True)
+        serializer = CommentSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     #POST 댓글 작성
     def post(self, request, post_id, *args, **kwargs):
-
-        context={'post_id': post_id} #serializer에 넘겨줄 dic
+        response = is_exist(request)
+        if response:
+            return response
+        context={'post_id': post_id,
+                'request':request} #serializer에 넘겨줄 dic
 
         user=extract_user_from_jwt(request)
         post=get_object_or_404(Post,post_id=post_id)
@@ -69,7 +82,8 @@ class CommentView(CreateAPIView,ListAPIView):
 
 #PATCH 댓글 삭제 // DELETE 휴지통삭제(ㄴㄴ)
 class CommentDetailView(RetrieveUpdateDestroyAPIView):
-    #permission_classes = [IsAuthenticated]
+
+    permission_class = [IsOkayBlockedPatch]
     serializer_class = CommentSerializer
     
     lookup_url_kwarg = 'comment_id'
@@ -80,14 +94,17 @@ class CommentDetailView(RetrieveUpdateDestroyAPIView):
         return Comment.objects.filter(post_id=post_id, display=True)
 
     #PATCH 댓글삭제
-    def patch(self,request,board_id, post_id, comment_id):
-        print(1)
+    def patch(self, request, board_id, post_id, comment_id):
+        response = is_exist(request)
+        if response:
+            return response
         comment = get_object_or_404(Comment, comment_id=comment_id)
-        if comment.display==False:
-            return Response({"message":"이미 삭제된 댓글입니다."},status=status.HTTP_200_OK)
-        comment.display = False  # display 필드를 False로 변경
-        comment.save()
-        
+        user=extract_user_from_jwt(request)
+        if comment.writer == user or user.status=='관리자':
+            comment.display = False  # display 필드를 False로 변경
+            comment.save()
+        else:
+            return Response({'message':'너 본인 아닌데 어케 접근했냐?'})
         #게시글 댓글 수 조정
         post=get_object_or_404(Post,post_id=post_id)
         post.comment_size = Comment.objects.filter(post=post, display=True).count()
@@ -96,23 +113,29 @@ class CommentDetailView(RetrieveUpdateDestroyAPIView):
 
 #PATCH 댓글 좋아요
 class CommentLikeView(UpdateAPIView):
-    #permission_classes=
+    permission_classes=[IsOkayLike]
     serializer_class=CommentSerializer
 
     lookup_url_kwarg = 'comment_id' #url에서
     lookup_field = 'comment_id' #model에서
 
     def patch(self,request,comment_id,*args, **kwargs):
+        response = is_exist(request)
+        if response:
+            return response
         comment=get_object_or_404(Comment,comment_id=comment_id)
         user=extract_user_from_jwt(request)
+
+        if comment.writer == user:
+            return Response({'message':'자신의 댓글은 좋아할 수 없습니다.'},status=status.HTTP_200_OK)
         try:
             comment.likers.get(user=user)
             return Response({'message':'이미 좋아요를 누른 댓글입니다.'})
         except ObjectDoesNotExist:
             #좋아하는 사람 목록에 추가
             CommentLiker.objects.create(comment=comment,user=user)
-            #게시글 좋아요 수 조정
+            #댓글 좋아요 수 조정
             comment.like_size=comment.likers.count()
             comment.save()
-            return Response({'message':'게시글을 좋아했습니다.'})
+            return Response({'message':'댓글을 좋아했습니다.'})
 

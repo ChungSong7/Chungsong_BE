@@ -22,7 +22,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         
-        fields = ['post_id','title', 'content', 'like_size', 'cmter_size', 'created_at', 
+        fields = ['post_id','title', 'content', 'like_size', 'comment_size', 'created_at', 
                 'board','author_profile','author_name','anon_status','images']
     def get_author_name(self, obj): #익명 여부에 따라 별명 or 익명
         return obj.author.username if not obj.anon_status else "익명"
