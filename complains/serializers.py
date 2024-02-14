@@ -3,7 +3,7 @@ from .models import Complain
 
 from users.serializers import UserSerializer
 from posts.serializers import PostSerializer
-from comment.serializers import CommentSerializer
+from comments.serializers import CommentSerializer
 
 
 class ComplainSerializer(serializers.ModelSerializer):
