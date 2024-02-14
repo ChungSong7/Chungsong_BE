@@ -42,7 +42,7 @@ class Comment(models.Model):
     post=models.ForeignKey(Post, verbose_name='게시글',on_delete=models.CASCADE,related_name='comments')
     content = models.TextField(verbose_name='내용')
     created_at = models.DateTimeField(verbose_name='작성시간',auto_now_add=True)
-    writer=models.ForeignKey(User,verbose_name='댓쓴이',on_delete=models.SET_NULL,null=True,related_name='comments',default=User.objects.all()[0].user_id)
+    writer=models.ForeignKey(User,verbose_name='댓쓴이',on_delete=models.SET_NULL,null=True,related_name='comments')
     commenter = models.CharField(verbose_name='댓쓴이 표시 이름',max_length=20) #user.nickname 일때 ,사라진 user에 대해선 (탈퇴회원 구현 필요)
     like_size = models.IntegerField(verbose_name='좋아요수',default=0)
     warn_size = models.IntegerField(verbose_name='신고수',default=0)
