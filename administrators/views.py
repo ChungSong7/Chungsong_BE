@@ -72,9 +72,3 @@ class RoomRequestView(APIView):
         room_request.user.save()
         room_request.save()
         return Response({'message':'호실 변동 처리 완료'},status=status.HTTP_204_NO_CONTENT)
-
-class temp(APIView):
-    def get(self,request):
-        user=extract_user_from_jwt(request)
-        print(user.status)
-        return Response
