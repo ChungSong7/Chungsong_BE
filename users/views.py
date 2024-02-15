@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.authentication import get_authorization_header
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status,generics
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
@@ -12,7 +12,11 @@ import re
 from django.contrib.auth.hashers import make_password,check_password
 from django.shortcuts import get_object_or_404
 
-#from django.contrib.auth import logout
+from posts.models import Post,Comment
+from posts.serializers import PostSerializer
+
+from boards.permissions import IsOkayBlockedPatch
+
 
 #회원가입 API
 class SignupView(APIView):
@@ -162,3 +166,25 @@ class UserMatchingView(APIView):
         # 이름, 호실, 이메일을 받아서 유저의 존재 여부 확인
         else:
             return Response({'message': 'User not found'}, status=404)
+
+class MyPostView(generics.ListAPIView):
+    permission_classes=[IsOkayBlockedPatch]
+    serializer_class = PostSerializer
+    def get_queryset(self):
+        user=extract_user_from_jwt(self.request)
+        my_posts=Post.objects.filter(author=user, display=True)
+        # 현재 요청한 사용자의 게시글 중 display 속성이 True인 것들만 필터링
+        return my_posts.order_by('-created_at')
+    
+class MyCommentView(generics.ListAPIView):
+    permission_classes=[IsOkayBlockedPatch]
+    serializer_class = PostSerializer
+    def get_queryset(self):
+        user= extract_user_from_jwt(self.request)
+
+        my_comments = Comment.objects.filter(writer=user, display=True)
+        commented_posts = my_comments.values_list('post_id', flat=True).distinct()
+        print(commented_posts)
+        print(type(commented_posts))
+
+        return Post.objects.filter(post_id__in=commented_posts).order_by('-created_at')

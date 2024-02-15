@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 def create_access_token(user_id):
     payload={
         'user_id':user_id,
-        'exp':datetime.datetime.utcnow()+datetime.timedelta(minutes=60), #초
+        'exp':datetime.datetime.utcnow()+datetime.timedelta(minutes=180), #초
         'iat':datetime.datetime.utcnow()
     }
     token=jwt.encode(payload,ACCESS_TOKEN_SECRET_KEY,algorithm=ALGORITHM)

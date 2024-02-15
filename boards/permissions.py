@@ -14,12 +14,10 @@ class IsOkayBlockedPatch(permissions.BasePermission):
     def has_permission(self, request, view):
         user=extract_user_from_jwt(request)
         #GET 조회는 인증대기 빼고 전부 가능
-        if request.method==('GET'or'PATCH'):
-            print(1)
+        if request.method in ['GET','PATCH']:
             return user.status in ['사생인증','정지','학생회','관리자']
         #POST 작성은 정지 회원 빼고 가능
         elif request.method=='POST':
-            print(3)
             return user.status in ['사생인증','학생회','관리자']
         #다른 HTTO 메서드는 거부! 
         return False 

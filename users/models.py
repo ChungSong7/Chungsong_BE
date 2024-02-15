@@ -13,8 +13,12 @@ class User(AbstractUser):
     room_card=models.ImageField(verbose_name='호실카드 사진')
     profile_image=models.IntegerField(verbose_name='프로필 캐릭터',default=0)
     complained=models.IntegerField(verbose_name='피신고수',default=0)
-    STATUS_CHOICE=('인증대기','사생인증','정지','학생회','관리자')
-    status=models.CharField(verbose_name='사용자 권한',max_length=255,default=STATUS_CHOICE[0])
+    STATUS_CHOICES=[('인증대기','인증대기'),
+                    ('사생인증','사생인증'),
+                    ('정지','정지'),
+                    ('학생회','학생회'),
+                    ('관리자','관리자')]
+    status=models.CharField(verbose_name='사용자 권한',max_length=255,choices=STATUS_CHOICES,default=STATUS_CHOICES[0])
     
     USERNAME_FIELD='email' #email로 로그인할거니까! 
     REQUIRED_FIELDS=['nickname', 'room','username','school','room_card','profile_image']
