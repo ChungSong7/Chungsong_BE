@@ -15,7 +15,16 @@ class ComplainSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Complain
-        fields = ['complain_id','comp_post','comp_comment','comp_user','comped_user','comp_date','category','status']
+        fields = [
+            'complain_id',
+            'comp_post_id', 
+            'comp_comment_id',  
+            'comp_user_id',
+            'comped_user_id', 
+            'comp_date',
+            'category',
+            'status',
+        ]
 
 #신고 작성
 class ComplainCreateSerializer(serializers.ModelSerializer):

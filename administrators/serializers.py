@@ -3,9 +3,12 @@ from users.authentications import extract_user_from_jwt
 from .models import RoomRequest
 
 class RoomRequestSerializer(serializers.ModelSerializer):
+    user= serializers.CharField(source='user.username',required=False)
+    nickname= serializers.CharField(source='user.nickname',required=False)
+
     class Meta:
         model = RoomRequest
-        fields = ['room_request_id','user', 'pre_room', 'new_room', 'request_date', 'status']
+        fields = ['room_request_id','user', 'pre_room', 'new_room', 'request_date', 'status','nickname']
         read_only_fields = ['request_date', 'status']
     def validate(self,data):
         pre_room=data.get('pre_room')
