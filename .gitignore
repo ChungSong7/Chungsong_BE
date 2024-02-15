@@ -1,5 +1,6 @@
 .env
 
 venv/
+my_settings.py
 
 settings.py
