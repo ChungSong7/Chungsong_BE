@@ -1,11 +1,10 @@
 from rest_framework.views import APIView
-from rest_framework.authentication import get_authorization_header
+from rest_framework.authentication import get_authorization_header,TokenAuthentication
 from rest_framework.response import Response
 from rest_framework import status,generics
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
-from .serializers import UserSerializer,UserUpdateSerializer,UserExistenceCheckSerializer
+from .serializers import UserSerializer
 from .models import User
 from .authentications import create_access_token,create_refresh_token,decode_access_token,decode_refresh_token,extract_user_from_jwt
 import re
@@ -65,44 +64,47 @@ class LoginView(APIView):
         #serializer=UserSerializer(user)
         #return Response(serializer.data)
         
-        
 
 #jwt 유저정보 조회,삭제 API
 class UserInfoView(APIView):
 
     #유저정보 조회
     def get(self,request):
-        user=extract_user_from_jwt(request)
-        serializer=UserSerializer(user)
-        return Response(serializer.data)
-    
-    #유저정보 수정(email, password) !!!반드시 POST UserMatchingView 호출 후에만 호출할 것!!!
-    def patch(self, request):
-        user_serializer = UserExistenceCheckSerializer(data=request.data)
-        update_serializer = UserUpdateSerializer(data=request.data, partial=True)
+        auth=get_authorization_header(request).split()
+        if auth and len(auth)==2: #auth[0]=='Bearer'
+            token=auth[1].decode('utf-8') #토큰 추출
+            user_id=decode_access_token(token) #토큰에서 유저 고유번호 추출
+            user=User.objects.get(user_id=user_id) #filter().first()랑 같어 어차피
+            serializer=UserSerializer(user)
+            return Response(serializer.data)
         
-        if user_serializer.is_valid(raise_exception=True):
-            user = user_serializer.validated_data
-        if update_serializer.is_valid(raise_exception=True):
-            response=update_serializer.update(user, update_serializer.validated_data)
-        
-        return response
+        raise AuthenticationFailed('unauthenticated')
     
     #회원탈퇴
     def delete(self,request):
         #너가 누군지 jwt로 찾을게
-        user=extract_user_from_jwt(request)
-        password = request.data.get('password', None)
-        if not password:
-            return Response({'error': 'please input password'}, status=status.HTTP_400_BAD_REQUEST)
-        if not user.check_password(password): #비밀번호 올바르게 입력했니?
-            raise AuthenticationFailed('!비밀번호가 일치하지 않습니다.')    
-        #계정삭제
-        user.delete()
-        #로그아웃
-        response = Response({'message': '회원탈퇴가 성공적으로 처리되었습니다.'}, status=status.HTTP_204_NO_CONTENT)
-        response.delete_cookie(key='refresh_token')
-        return response
+        auth=get_authorization_header(request).split()
+        if auth and len(auth)==2: #auth[0]=='Bearer'
+            token=auth[1].decode('utf-8') #토큰 추출
+            user_id=decode_access_token(token) #토큰에서 유저 고유번호 추출
+            try:
+                user = User.objects.get(user_id=user_id)  
+            except User.DoesNotExist:   #User.objects.get() 메서드는 DoesNotExist 예외를 발생시킵!!
+                raise AuthenticationFailed('User not found')
+            
+            password = request.data.get('password', None)
+            if not password:
+                return Response({'error': 'please input password'}, status=status.HTTP_400_BAD_REQUEST)
+            if not user.check_password(password): #비밀번호 올바르게 입력했니?
+                raise AuthenticationFailed('Incorrect password')
+            
+            #계정삭제
+            user.delete()
+            #로그아웃
+            response = Response({'message': '회원탈퇴가 성공적으로 처리되었습니다.'}, status=status.HTTP_204_NO_CONTENT)
+            response.delete_cookie('refresh_token')
+            return response
+        raise AuthenticationFailed('unauthenticated')
 
     
 
@@ -124,16 +126,18 @@ class LogoutView(APIView):
         response.delete_cookie(key='refresh_token')
         return response
     
-#회원가입 - 별명 중복 검사 API
+#회원가입 - 별명 중복 검사
 class NickDupCheckView(APIView):
 
+    def is_korean_only(self, text):
+        return bool(re.match('^[\uac00-\ud7a3]+$', text))
+    
     def get(self, request):
         nickname=request.GET.get('nickname', None)
+        print(nickname)
         if not nickname:
             return Response({'error': 'please input nickname'}, status=status.HTTP_400_BAD_REQUEST)
-        if bool(re.match('^[\uac00-\ud7a3]+$', nickname)):
-            if len(nickname)>7:
-                return Response({'message':'must be less than 8 characters long'})
+        if self.is_korean_only(nickname):
             try:
                 User.objects.get(nickname=nickname) #get이 객체 없으면 얘외 발생 시켜주는 애라서 ㄱㅊ
                 return Response({'message':'The nickname is already taken'})
@@ -143,29 +147,34 @@ class NickDupCheckView(APIView):
 
 
 class UserMatchingView(APIView):
-    #로그인 전 email 찾기
     def get(self, request):
         # 이름과 호실을 받아서 이메일 반환
         username = request.query_params.get('username')
         room = request.query_params.get('room')
-        user = get_object_or_404(User,username=username, room=room) # 없으면 not fount 메시지 줌
-        email=user.email
-        #email mask
-        email_id, domain = email.split('@')
-        masked_email_id = email_id[:4] + '*' * (len(email_id) - 4)
-        masked_email = masked_email_id + '@' + domain
-        return Response({'message':'조회 성공','masked_email': masked_email})
+        try:
+            user = User.objects.get(username=username, room=room)
+            email=user.email
 
+            #email mask
+            email_id, domain = email.split('@')
+            masked_email_id = email_id[:4] + '*' * (len(email_id) - 4)
+            masked_email = masked_email_id + '@' + domain
+
+            return Response({'message':'조회 성공','masked_email': masked_email})
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=404)
+    
     def post(self, request):
-        serializer = UserExistenceCheckSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            user = serializer.validated_data
-            print(user)
-            return Response({'message': 'User exists', 'username': user.username,'room':user.room,'email':user.email,'school':user.school})
         # 이름, 호실, 이메일을 받아서 유저의 존재 여부 확인
-        else:
+        username = request.data.get('username')
+        room = request.data.get('room')
+        email = request.data.get('email')
+        try:
+            user = User.objects.get(username=username, room=room, email=email)
+            return Response({'message': 'User found'})
+        except User.DoesNotExist:
             return Response({'message': 'User not found'}, status=404)
+
 
 class MyPostView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
@@ -188,3 +197,7 @@ class MyCommentView(generics.ListAPIView):
         print(type(commented_posts))
 
         return Post.objects.filter(post_id__in=commented_posts).order_by('-created_at')
+
+
+class FrozenHistoryView(APIView):
+    pass
