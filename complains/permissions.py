@@ -14,8 +14,8 @@ class IsOkayComplain(permissions.BasePermission):
     def has_permission(self, request, view):
         user=extract_user_from_jwt(request)
         #GET 조회는 인증대기 빼고 전부 가능
-        if request.method in ['GET']:
-            return user.status in ['관리자']
+        if request.method == 'GET':
+            return user.status == '관리자'
         #POST 작성은 정지 회원 빼고 가능
         elif request.method=='POST':
             return user.status in ['사생인증','학생회','관리자']
