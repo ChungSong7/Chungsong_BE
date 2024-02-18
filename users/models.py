@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 import uuid
 
 class User(AbstractUser):
@@ -19,6 +20,16 @@ class User(AbstractUser):
                     ('학생회','학생회'),
                     ('관리자','관리자')]
     status=models.CharField(verbose_name='사용자 권한',max_length=255,choices=STATUS_CHOICES,default=STATUS_CHOICES[0])
+    suspension_end_date = models.DateTimeField(verbose_name='정지 종료일', blank=True, null=True,default=None)
+
+    def update_status(self):
+        # 정지 상태인 경우 정지 종료일이 지났는지 확인하여 상태를 업데이트합니다.
+        if self.status == '정지' and self.suspension_end_date is not None:
+            if self.suspension_end_date <= timezone.now():
+                self.status = '사생인증'  # 정지 종료일이 지나면 상태를 '사생인증'으로 변경
+                self.save()
+        
+
     
     USERNAME_FIELD='email' #email로 로그인할거니까! 
     REQUIRED_FIELDS=['nickname', 'room','username','school','room_card','profile_image']

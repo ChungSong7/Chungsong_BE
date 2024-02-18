@@ -1,11 +1,13 @@
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import NewUserView,RoomRequestView
+from .views import NewUserView,RoomRequestView,FreezeView
 
 urlpatterns = [
     path('new_user/', NewUserView.as_view(), name='NewUser'),
     path('room_request/',RoomRequestView.as_view(),name='RoomRequest'),
+    #path('frozen_history/',FrozenHistoryView.as_view(),name='FrozenHistory'), #유저별 정지이력
+    path('freeze/', FreezeView.as_view(),name='Freeze'), #유저 정지먹이기. 정지 이력 불러오기
 ]
 
 # 이미지 경로 추가

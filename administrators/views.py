@@ -9,6 +9,9 @@ from .models import RoomRequest
 from django.shortcuts import get_object_or_404
 from users.authentications import extract_user_from_jwt
 
+from datetime import timedelta
+from django.utils import timezone
+
 
 
 class NewUserView(APIView):
@@ -72,3 +75,24 @@ class RoomRequestView(APIView):
         room_request.user.save()
         room_request.save()
         return Response({'message':'호실 변동 처리 완료'},status=status.HTTP_204_NO_CONTENT)
+    
+
+class FreezeView(APIView):
+    permission_classes = [IsAdmin]
+    #정지먹이기
+    def patch(self,request):
+        user_id = request.data.get('user_id')
+        suspension_days = request.data.get('suspension_days')
+        user=get_object_or_404(User,user_id=user_id)
+        if user.status=='사생인증':
+            user.suspension_end_date = timezone.now() + timedelta(days=int(suspension_days))
+            user.status='정지'
+        elif user.status=='정지':
+            user.suspension_end_date += timedelta(days=int(suspension_days))
+        user.save()
+        return Response({"message": f"{user.username}님이 {suspension_days}일간 정지되었습니다."}, status=status.HTTP_200_OK)
+    
+    #정지 이력 조회
+    def get(self, request):
+        pass
+
