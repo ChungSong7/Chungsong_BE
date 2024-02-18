@@ -22,11 +22,6 @@ class Complain(models.Model):
         ('기타','기타')
     )
     category = models.CharField(verbose_name='신고사유', choices=CATEGOTY_CHOICES,max_length=50)
-
-    STATUS_CHOICES = (
-        (0,'대기중'),
-        (1,'처리됨'),
-    )
-    status = models.IntegerField(verbose_name='신고처리상태',choices=STATUS_CHOICES, default = 0)
+    status = models.CharField(verbose_name='신고처리상태',max_length=30, default='신고접수')
 
 
