@@ -5,7 +5,7 @@ from rest_framework import status,generics
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer
-from .models import User
+from .models import User,DeletedUser
 from .authentications import create_access_token,create_refresh_token,decode_access_token,decode_refresh_token,extract_user_from_jwt
 import re
 from django.contrib.auth.hashers import make_password,check_password
@@ -66,28 +66,31 @@ class UserInfoView(APIView):
     #회원탈퇴
     def delete(self,request):
         #너가 누군지 jwt로 찾을게
-        auth=get_authorization_header(request).split()
-        if auth and len(auth)==2: #auth[0]=='Bearer'
-            token=auth[1].decode('utf-8') #토큰 추출
-            user_id=decode_access_token(token) #토큰에서 유저 고유번호 추출
-            try:
-                user = User.objects.get(user_id=user_id)  
-            except User.DoesNotExist:   #User.objects.get() 메서드는 DoesNotExist 예외를 발생시킵!!
-                raise AuthenticationFailed('User not found')
+        user=extract_user_from_jwt(request)
             
-            password = request.data.get('password', None)
-            if not password:
-                return Response({'error': 'please input password'}, status=status.HTTP_400_BAD_REQUEST)
-            if not user.check_password(password): #비밀번호 올바르게 입력했니?
-                raise AuthenticationFailed('Incorrect password')
-            
-            #계정삭제
-            user.delete()
-            #로그아웃
-            response = Response({'message': '회원탈퇴가 성공적으로 처리되었습니다.'}, status=status.HTTP_204_NO_CONTENT)
-            response.delete_cookie('refresh_token')
-            return response
-        raise AuthenticationFailed('unauthenticated')
+        password = request.data.get('password', None)
+        if not password:
+            return Response({'error': 'please input password'}, status=status.HTTP_400_BAD_REQUEST)
+        if not user.check_password(password): #비밀번호 올바르게 입력했니?
+            raise AuthenticationFailed('Incorrect password')
+        
+        DeletedUser.objects.create(
+            name = user.username,
+            email = user.email,
+            room = user.room,
+            school = user.school
+        )
+        #계정 별명, 이메일, 호실 필드 비우기, 권한 바꾸기,
+        user.nickname = ''
+        user.email = ''
+        user.room = 0
+        user.status = '탈퇴회원'
+        user.save()
+
+        #로그아웃
+        response = Response({'message': '회원탈퇴가 성공적으로 처리되었습니다.'}, status=status.HTTP_204_NO_CONTENT)
+        response.delete_cookie('refresh_token')
+        return response
 
     
 

@@ -5,7 +5,7 @@ import uuid
 
 class User(AbstractUser):
     user_id=models.UUIDField(verbose_name='고유번호',primary_key=True, default=uuid.uuid4, unique=True,editable=False)
-    nickname=models.CharField(verbose_name='닉네임', max_length=255,unique=True)
+    nickname=models.CharField(verbose_name='닉네임', max_length=255)
     room=models.PositiveSmallIntegerField(verbose_name='호실수')
     email=models.EmailField(verbose_name='이메일',max_length=255,unique=True)
     password=models.CharField(verbose_name='비밀번호',max_length=255)
@@ -18,7 +18,8 @@ class User(AbstractUser):
                     ('사생인증','사생인증'),
                     ('정지','정지'),
                     ('학생회','학생회'),
-                    ('관리자','관리자')]
+                    ('관리자','관리자'),
+                    ('탈퇴회원','탈퇴회원')]
     status=models.CharField(verbose_name='사용자 권한',max_length=255,default='인증대기')
     suspension_end_date = models.DateTimeField(verbose_name='정지 종료일', blank=True, null=True,default=None)
 
@@ -33,3 +34,13 @@ class User(AbstractUser):
     
     USERNAME_FIELD='email' #email로 로그인할거니까! 
     REQUIRED_FIELDS=['nickname', 'room','username','school','room_card','profile_image']
+
+
+class DeletedUser(models.Model):
+    deleted_user_id=models.UUIDField(verbose_name='고유번호',primary_key=True, default=uuid.uuid4, unique=True,editable=False)
+    name=models.CharField(verbose_name='이름',max_length=30)
+    email=models.EmailField(verbose_name='이메일',max_length=255)
+    room=models.PositiveSmallIntegerField(verbose_name='호실수')
+    school=models.CharField(verbose_name='학교',max_length=255)
+    #deleted_date=models.DateTimeField(verbose_name='탈퇴날짜',auto_now_add=True)##이거 추가해서 다시 마이그레이션해보자. 디비 싹 갈고^^
+
