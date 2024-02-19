@@ -4,17 +4,25 @@ from rest_framework.response import Response
 from rest_framework import status,generics
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
+
 from .serializers import UserSerializer
-from .models import User,DeletedUser
+from .models import User,DeletedUser,EmailVarify
 from .authentications import create_access_token,create_refresh_token,decode_access_token,decode_refresh_token,extract_user_from_jwt
 import re
 from django.contrib.auth.hashers import make_password,check_password
 from django.shortcuts import get_object_or_404
+from django.core.mail import send_mail
+from django.utils import timezone
+from django.core.validators import EmailValidator
+from django.core.exceptions import ValidationError
+
+from config import settings
 
 from posts.models import Post,Comment
 from posts.serializers import PostSerializer
 
 from boards.permissions import IsOkayBlockedPatch
+import random
 
 
 #회원가입 API
@@ -184,6 +192,57 @@ class MyCommentView(generics.ListAPIView):
 
         return Post.objects.filter(post_id__in=commented_posts).order_by('-created_at')
 
+class SendEmailCodeView(APIView):
+    def post(self,request):
+        # 요청에서 이메일 주소 받기
+        email = request.data.get('email') 
+        try:#email 형식만 맞는지 한번 체크해줘!
+            email_validator = EmailValidator()
+            email_validator(email) 
+        except ValidationError:
+            return Response({'message':'올바른 이메일 형식이 아닙니다.'})
+        
+        #4자리 랜덤 코드 생성
+        code = ''.join(random.choices('0123456789', k=6))
 
-class FrozenHistoryView(APIView):
-    pass
+        #EmailVarify 객체 생성 or 업데이트
+        try:
+            email_varify_obj = EmailVarify.objects.get(email=email)
+            email_varify_obj.code = code
+            email_varify_obj.created_at= timezone.now()
+            email_varify_obj.save()
+        except EmailVarify.DoesNotExist:
+            EmailVarify.objects.create(email=email, code=code)
+        
+        # 이메일로 코드 전송
+        send_mail(
+            '<청송> 이메일 인증 코드',#제목
+            f'회원님의 이메일 인증 코드는 {code} 입니다.',#본문
+            settings.EMAIL_HOST_USER,#발신 이메일 주소
+            [email],#수신 이메일 주소
+            fail_silently=False, 
+        )
+        return Response({"message": "인증 번호 전송"}, status=status.HTTP_200_OK)
+    
+
+class CheckEmailCodeView(APIView):
+    def delete(self,request):
+        # 사용자가 전달한 email과 code 가져오기
+        email = request.data.get('email')
+        code = request.data.get('code')
+        try:
+            # email에 해당하는 EmailVarify 객체 찾기
+            email_varify_obj = EmailVarify.objects.get(email=email)
+            # 현재 시간과 객체의 생성 시간의 차이 계산 (분 단위로 변환)
+            time_difference_minutes = (timezone.now() - email_varify_obj.created_at).total_seconds() / 60
+            # 시간 차이가 5분 미만이면 코드 비교
+            if time_difference_minutes < 5:
+                if email_varify_obj.code == code: #인증코드 일치
+                    email_varify_obj.delete()
+                    return Response({'message': '이메일 인증이 완료되었습니다.'}, status=status.HTTP_200_OK)
+                else: #인증코드 불일치
+                    return Response({'message': '인증코드가 올바르지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            else: # 시간 초과 응답
+                return Response({'message': '인증 시간이 초과되었습니다. 다시 인증해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+        except EmailVarify.DoesNotExist: # 애초에 그런 email 인증 code 발행한 적 없는데?
+            return Response({'message': '해당 이메일에 대한 인증 정보가 없습니다.'}, status=status.HTTP_400_BAD_REQUEST)

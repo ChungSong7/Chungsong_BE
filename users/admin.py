@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User,DeletedUser
+from .models import User,DeletedUser,EmailVarify
 
 class CustomUserAdmin(UserAdmin):
     # 유저 리스트에 보여질 필드 지정
@@ -12,3 +12,7 @@ admin.site.register(User, CustomUserAdmin)
 @admin.register(DeletedUser)
 class PostAdmin(admin.ModelAdmin):
     list_display = ['deleted_user_id','name','email','room','school']
+
+@admin.register(EmailVarify)
+class EmailVarifyAdmin(admin.ModelAdmin):
+    list_display = ['email_varify_id','email','code','created_at']

@@ -44,3 +44,8 @@ class DeletedUser(models.Model):
     school=models.CharField(verbose_name='학교',max_length=255)
     #deleted_date=models.DateTimeField(verbose_name='탈퇴날짜',auto_now_add=True)##이거 추가해서 다시 마이그레이션해보자. 디비 싹 갈고^^
 
+class EmailVarify(models.Model):
+    email_varify_id=models.UUIDField(verbose_name='고유번호',primary_key=True, default=uuid.uuid4, unique=True,editable=False)
+    email=models.EmailField(verbose_name='이메일',max_length=255,unique=True)
+    code=models.CharField(verbose_name='인증번호',max_length=6)
+    created_at=models.DateTimeField(verbose_name='인증코드 생성시간',auto_now_add=True)

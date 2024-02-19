@@ -92,12 +92,11 @@ class FreezeView(APIView):
         complained_size=user.complained
         user.complained=0 #피신고수 청산
         user.save()
-
         # 정지 히스토리 객체 생성
         FreezeHistory.objects.create(
             user=user,
             complained_size=complained_size,
-            end_date=user.suspension_end_date,
+            end_date=user.suspension_end_date, 
             days=int(freeze_days)
         )
         return Response({"message": f"{user.username}님이 {freeze_days}일간 정지되었습니다."}, status=status.HTTP_200_OK)
