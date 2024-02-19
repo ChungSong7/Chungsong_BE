@@ -236,7 +236,7 @@ class CheckEmailCodeView(APIView):
             # 현재 시간과 객체의 생성 시간의 차이 계산 (분 단위로 변환)
             time_difference_minutes = (timezone.now() - email_varify_obj.created_at).total_seconds() / 60
             # 시간 차이가 5분 미만이면 코드 비교
-            if time_difference_minutes < 5:
+            if time_difference_minutes < 3:
                 if email_varify_obj.code == code: #인증코드 일치
                     email_varify_obj.delete()
                     return Response({'message': '이메일 인증이 완료되었습니다.'}, status=status.HTTP_200_OK)

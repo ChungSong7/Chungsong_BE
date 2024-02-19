@@ -8,6 +8,7 @@ from .serializers import RoomRequestSerializer,FrozenHistorySerializer
 from .models import RoomRequest,FreezeHistory
 from django.shortcuts import get_object_or_404
 from users.authentications import extract_user_from_jwt
+from posts.models import Post,Comment
 
 from datetime import timedelta
 from django.utils import timezone
@@ -108,3 +109,21 @@ class FreezeView(APIView):
         frozen_histories = FreezeHistory.objects.filter(user=user).order_by('-start_date')
         serializer = FrozenHistorySerializer(frozen_histories, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class AdminDeleteView(APIView):
+    permission_classes=[IsAdmin]
+
+    def delete(self,request):
+        post_id = request.data.get('post_id')
+        comment_id = request.data.get('comment_id')
+
+        if post_id and not comment_id:
+            post=get_object_or_404(Post,post_id=post_id)
+            post.delete()
+            return Response({'message':'게시글이 완전 삭제되었습니다.'})
+        elif not post_id and comment_id:
+            comment=get_object_or_404(Comment,comment_id=comment_id)
+            comment.delete()
+            return Response({'message':'댓글이 완전 삭제되었습니다.'})
+        else:
+            return Response({'message':'유효한 post_id 또는 comment_id 를 전달하세요'})
