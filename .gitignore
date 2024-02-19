@@ -5,3 +5,5 @@ venv/
 my_settings.py
 
 settings.py
+
+chungsong-server-keypair.pem

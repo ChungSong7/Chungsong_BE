@@ -13,7 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 class IsOkayComplain(permissions.BasePermission):
     def has_permission(self, request, view):
         user=extract_user_from_jwt(request)
-        #GET 조회는 인증대기 빼고 전부 가능
+        #GET 관리자만 신고조회
         if request.method == 'GET':
             return user.status == '관리자'
         #POST 작성은 정지 회원 빼고 가능

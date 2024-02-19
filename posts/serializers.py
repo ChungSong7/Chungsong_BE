@@ -24,7 +24,10 @@ class PostSerializer(serializers.ModelSerializer):
         
         fields = ['post_id','title', 'content', 'like_size', 'comment_size', 'created_at', 
                 'board','author_profile','author_name','anon_status','images']
-    def get_author_name(self, obj): #익명 여부에 따라 별명 or 익명
+    
+    def get_author_name(self, obj):#익명 여부에 따라 별명 or 익명
+        if obj.author==None or obj.author.status=='탈퇴회원':
+            return "탈퇴회원"
         return obj.author.username if not obj.anon_status else "익명"
     
     def create(self, validated_data):
