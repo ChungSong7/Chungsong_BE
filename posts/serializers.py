@@ -32,7 +32,9 @@ class PostSerializer(serializers.ModelSerializer):
         board_id = self.context['board_id']
         board = get_object_or_404(Board, board_id=board_id)
         user = extract_user_from_jwt(self.context['request'])
-
+        if board.board_name=='공지사항':
+            if user.status not in ['학생회','관리자']:
+                raise serializers.ValidationError("공지사항에는 학생회만 글을 쓸 수 있습니다.")
         # 익명 여부에 따라 작성자 프로필 설정
         anon_status = validated_data.get('anon_status')
         if anon_status:

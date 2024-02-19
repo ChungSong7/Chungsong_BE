@@ -12,6 +12,6 @@ urlpatterns = [
     path('signup/nkname_dupcheck/',NickDupCheckView.as_view(),name='NickDupCheck'),
     path('user_matching/',UserMatchingView.as_view(),name='UserMatching'),
     path('my_posts/',MyPostView.as_view(),name='MyPost'),
-    path('my_comments/',MyCommentView.as_view(), name='MyComment')
+    path('my_comments/',MyCommentView.as_view(), name='MyComment'),
 ] + static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
 

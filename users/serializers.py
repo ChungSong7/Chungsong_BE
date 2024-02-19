@@ -11,7 +11,8 @@ class UserSerializer(serializers.ModelSerializer):
     password_confirm=serializers.CharField(write_only=True)
     class Meta:
         model=User
-        fields=['user_id','username','nickname','email','room','room_card','school','password','password_confirm','status','complained','profile_image']
+        fields=['user_id','username','nickname','email','room','room_card','school',
+                'password','password_confirm','status','complained','profile_image']
         extra_kwargs={
             'password':{'write_only':True}, #비번 필드는 읽기 전용
         }

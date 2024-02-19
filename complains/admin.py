@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import Complain
 
-# Register your models here.
+@admin.register(Complain)
+class ComplainAdmin(admin.ModelAdmin):
+    list_display = ['complain_id','category','comp_post','comp_comment',
+                    'comp_user','comped_user','comp_date','status']

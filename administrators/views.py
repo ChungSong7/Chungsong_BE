@@ -4,10 +4,13 @@ from rest_framework.response import Response
 from users.models import User
 from users.serializers import UserSerializer
 from .permissions import IsAdmin,RequestPermission
-from .serializers import RoomRequestSerializer
-from .models import RoomRequest
+from .serializers import RoomRequestSerializer,FrozenHistorySerializer
+from .models import RoomRequest,FreezeHistory
 from django.shortcuts import get_object_or_404
 from users.authentications import extract_user_from_jwt
+
+from datetime import timedelta
+from django.utils import timezone
 
 
 
@@ -72,3 +75,37 @@ class RoomRequestView(APIView):
         room_request.user.save()
         room_request.save()
         return Response({'message':'호실 변동 처리 완료'},status=status.HTTP_204_NO_CONTENT)
+    
+
+class FreezeView(APIView):
+    permission_classes = [IsAdmin]
+    #정지먹이기
+    def patch(self,request):
+        user_id = request.data.get('user_id')
+        freeze_days = request.data.get('freeze_days')
+        user=get_object_or_404(User,user_id=user_id)
+        if user.status=='사생인증':
+            user.suspension_end_date = timezone.now() + timedelta(days=int(freeze_days))
+            user.status='정지'
+        elif user.status=='정지':
+            user.suspension_end_date += timedelta(days=int(freeze_days))
+        complained_size=user.complained
+        user.complained=0 #피신고수 청산
+        user.save()
+
+        # 정지 히스토리 객체 생성
+        FreezeHistory.objects.create(
+            user=user,
+            complained_size=complained_size,
+            end_date=user.suspension_end_date,
+            days=int(freeze_days)
+        )
+        return Response({"message": f"{user.username}님이 {freeze_days}일간 정지되었습니다."}, status=status.HTTP_200_OK)
+    
+    #정지 이력 조회
+    def get(self,request,user_id,*args, **kwargs):
+        user_id=self.kwargs['user_id']
+        user = get_object_or_404(User, user_id=user_id)
+        frozen_histories = FreezeHistory.objects.filter(user=user).order_by('-start_date')
+        serializer = FrozenHistorySerializer(frozen_histories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
