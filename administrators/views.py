@@ -9,9 +9,13 @@ from .models import RoomRequest,FreezeHistory
 from django.shortcuts import get_object_or_404
 from users.authentications import extract_user_from_jwt
 from posts.models import Post,Comment
+from posts.serializers import PostSerializer
+from .school_list import SCHOOL_LIST
 
 from datetime import timedelta
 from django.utils import timezone
+
+from django.db.models import Q
 
 
 
@@ -112,7 +116,7 @@ class FreezeView(APIView):
 
 class AdminDeleteView(APIView):
     permission_classes=[IsAdmin]
-
+    #게시글 or 댓글 완전삭제
     def delete(self,request):
         post_id = request.data.get('post_id')
         comment_id = request.data.get('comment_id')
@@ -133,3 +137,16 @@ class AdminDeleteView(APIView):
             return Response({'message':'댓글이 완전 삭제되었습니다.'})
         else:
             return Response({'message':'유효한 post_id 또는 comment_id 를 전달하세요'})
+        
+    #휴지통 조회(삭제된)
+    def get(self,request):
+        deleted_comments = Comment.objects.filter(display=False)
+        deleted_comment_posts = deleted_comments.values_list('post_id', flat=True).distinct()
+        deleted_posts = Post.objects.filter(Q(display=False)|Q(post_id__in=deleted_comment_posts)).order_by('-created_at').distinct()
+        serializer = PostSerializer(deleted_posts, many=True)
+
+        return Response(serializer.data)
+    
+class SchoolListView(APIView):
+    def get(sefl,request):
+        return Response(SCHOOL_LIST)

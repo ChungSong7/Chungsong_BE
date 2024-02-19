@@ -187,8 +187,6 @@ class MyCommentView(generics.ListAPIView):
 
         my_comments = Comment.objects.filter(writer=user, display=True)
         commented_posts = my_comments.values_list('post_id', flat=True).distinct()
-        print(commented_posts)
-        print(type(commented_posts))
 
         return Post.objects.filter(post_id__in=commented_posts).order_by('-created_at')
 
