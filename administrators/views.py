@@ -123,7 +123,13 @@ class AdminDeleteView(APIView):
             return Response({'message':'게시글이 완전 삭제되었습니다.'})
         elif not post_id and comment_id:
             comment=get_object_or_404(Comment,comment_id=comment_id)
+            #게시글의 댓글 수 재조정
+            post=comment.post
             comment.delete()
+            print(post.comment_size)
+            post.comment_size = Comment.objects.filter(post=post, display=True).count()
+            print(post.comment_size)
+            post.save()
             return Response({'message':'댓글이 완전 삭제되었습니다.'})
         else:
             return Response({'message':'유효한 post_id 또는 comment_id 를 전달하세요'})
