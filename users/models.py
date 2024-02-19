@@ -23,7 +23,7 @@ class User(AbstractUser):
     suspension_end_date = models.DateTimeField(verbose_name='정지 종료일', blank=True, null=True,default=None)
 
     def update_status(self):
-        # 정지 상태인 경우 정지 종료일이 지났는지 확인하여 상태를 업데이트합니다.
+        # 정지 상태인 경우 정지 종료일이 지났는지 확인하여 상태를 업데이트
         if self.status == '정지' and self.suspension_end_date is not None:
             if self.suspension_end_date <= timezone.now():
                 self.status = '사생인증'  # 정지 종료일이 지나면 상태를 '사생인증'으로 변경

@@ -70,16 +70,10 @@ class UserInfoView(APIView):
 
     #유저정보 조회
     def get(self,request):
-        auth=get_authorization_header(request).split()
-        if auth and len(auth)==2: #auth[0]=='Bearer'
-            token=auth[1].decode('utf-8') #토큰 추출
-            user_id=decode_access_token(token) #토큰에서 유저 고유번호 추출
-            user=User.objects.get(user_id=user_id) #filter().first()랑 같어 어차피
-            serializer=UserSerializer(user)
-            return Response(serializer.data)
+        user=extract_user_from_jwt(request)
+        serializer=UserSerializer(user)
+        return Response(serializer.data)
         
-        raise AuthenticationFailed('unauthenticated')
-    
     #회원탈퇴
     def delete(self,request):
         #너가 누군지 jwt로 찾을게

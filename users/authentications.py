@@ -45,9 +45,9 @@ def decode_refresh_token(token):
 def extract_user_from_jwt(request):
     auth=get_authorization_header(request).split()
     if auth and len(auth)==2: #auth[0]=='Bearer'
-            token=auth[1].decode('utf-8') #토큰 추출
-            user_id=decode_access_token(token) #토큰에서 유저 고유번호 추출
-            user=get_object_or_404(User,user_id=user_id)
-            user.update_status()
-            return user
+        token=auth[1].decode('utf-8') #토큰 추출
+        user_id=decode_access_token(token) #토큰에서 유저 고유번호 추출
+        user=get_object_or_404(User,user_id=user_id)
+        user.update_status()
+        return user
     return exceptions.AuthenticationFailed('access_token unauthenticated')

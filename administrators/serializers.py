@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from users.authentications import extract_user_from_jwt
-from .models import RoomRequest
+from .models import RoomRequest,FreezeHistory
 from users.models import User
 from django.shortcuts import get_object_or_404
 class RoomRequestSerializer(serializers.ModelSerializer):
@@ -34,11 +34,10 @@ class RoomRequestSerializer(serializers.ModelSerializer):
         instance.status = 1  # 처리 완료 상태로 변경
         instance.save()
         return instance
-    '''
-    def update(self, instance, validated_data):
-        validated_data['status']=1
-        instance.new_room = validated_data.get('new_room')
-        instance.save()
-        return instance
     
-    '''
+
+class FrozenHistorySerializer(serializers.ModelSerializer):
+    user_id=serializers.CharField(source='user.user_id',required=False)
+    class Meta:
+        model = FreezeHistory
+        fields = ['freeze_history_id','user','user_id','complained_size','start_date','end_date','days']
