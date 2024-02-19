@@ -11,10 +11,6 @@ from .serializers import ComplainSerializer
 from .permissions import IsOkayComplain
 from administrators.permissions import IsAdmin
 
-class TempView(APIView):
-    def get(self, request):
-        return Response({'message':'hello world!'})
-
 #GET 신고 리스트 조회 POST 신고 하기
 class ComplainView(APIView): 
     permission_classes = [IsOkayComplain]

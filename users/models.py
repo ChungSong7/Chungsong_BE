@@ -19,7 +19,7 @@ class User(AbstractUser):
                     ('정지','정지'),
                     ('학생회','학생회'),
                     ('관리자','관리자')]
-    status=models.CharField(verbose_name='사용자 권한',max_length=255,choices=STATUS_CHOICES,default=STATUS_CHOICES[0])
+    status=models.CharField(verbose_name='사용자 권한',max_length=255,default='인증대기')
     suspension_end_date = models.DateTimeField(verbose_name='정지 종료일', blank=True, null=True,default=None)
 
     def update_status(self):

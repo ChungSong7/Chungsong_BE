@@ -23,19 +23,8 @@ class SignupView(APIView):
         serializer=UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True) #유효하지 않을 경우 예외 발생
         user= serializer.save()
-
-        #회원가입 & 동시 로그인
-        access_token=create_access_token(str(user.user_id)) #얘는 시리얼라이저 데이터로
-        refresh_token=create_refresh_token(str(user.user_id)) #얘는 쿠키로!
-
-        response=Response()
-        response.set_cookie(key='refresh_token',value=refresh_token,httponly=True)
-        response.data={
-            'message':'signup & login success',
-            'status':user.status,
-            'access_token':access_token
-        }
-        return response
+        #회원가입
+        return Response({'message':'signup success','status':user.status})
 
 #로그인 API
 class LoginView(APIView):
@@ -51,6 +40,9 @@ class LoginView(APIView):
         if not user.check_password(password):
             raise AuthenticationFailed('Incorrect password')
         
+        if user.status=='인증대기':
+            return Response({'message':'회원님은 현재 인증대기 상태입니다.'})
+
         access_token=create_access_token(str(user.user_id)) #얘는 시리얼라이저 데이터로
         refresh_token=create_refresh_token(str(user.user_id)) #얘는 쿠키로!
 
@@ -60,10 +52,7 @@ class LoginView(APIView):
             'message':'login success',
             'access_token':access_token
         }
-        return response
-        #serializer=UserSerializer(user)
-        #return Response(serializer.data)
-        
+        return response      
 
 #jwt 유저정보 조회,삭제 API
 class UserInfoView(APIView):
