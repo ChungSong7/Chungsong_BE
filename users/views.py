@@ -156,6 +156,18 @@ class NickDupCheckView(APIView):
                 return Response({'message':'The nickname is available for use'})
         return Response({"message":"Nickname should be Korean without spaces"})
 
+class EmailDupCheckView(APIView): #이메일 바꾸기 전,회원가입 시 이메일 인증 전 호출
+    def get(self, request):
+        email=request.GET.get('email', None)
+        if not email:
+            return Response({'error':'이메일을 입력해주세요'})
+        if not re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', email):
+            return Response({'error':'이메일 형식이 맞지 않습니다.'})
+        try:
+            User.objects.get(email=email) #get이 객체 없으면 얘외 발생 시켜주는 애라서 ㄱㅊ
+            return Response({'message':'이미 사용 중인 이메일입니다.'})
+        except User.DoesNotExist:
+            return Response({'message':'사용 가능한 이메일입니다.'})
 
 class UserMatchingView(APIView):
     def get(self, request):

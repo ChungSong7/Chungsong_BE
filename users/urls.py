@@ -1,7 +1,7 @@
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import SignupView,LoginView,UserInfoView,LogoutView,RefreshJWTTokenView,NickDupCheckView,UserMatchingView
+from .views import SignupView,LoginView,UserInfoView,LogoutView,RefreshJWTTokenView,NickDupCheckView,EmailDupCheckView,UserMatchingView
 from .views import MyPostView,MyCommentView,SendEmailCodeView,CheckEmailCodeView,MyNoticeView
 urlpatterns = [
     path('signup/', SignupView.as_view(),name='SignUp'),
@@ -10,6 +10,7 @@ urlpatterns = [
     path('refresh_jwt_token/',RefreshJWTTokenView.as_view(),name='RefreshJWTToken'),
     path('logout/',LogoutView.as_view(),name='Logout'),
     path('signup/nkname_dupcheck/',NickDupCheckView.as_view(),name='NickDupCheck'),
+    path('email_dupcheck/',EmailDupCheckView.as_view(),name='EmailDupCheck'),
     path('user_matching/',UserMatchingView.as_view(),name='UserMatching'),
     path('my_posts/',MyPostView.as_view(),name='MyPost'),
     path('my_comments/',MyCommentView.as_view(), name='MyComment'),
