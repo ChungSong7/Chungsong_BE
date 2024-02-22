@@ -3,8 +3,8 @@ from .models import RoomRequest,FreezeHistory
 
 @admin.register(RoomRequest)
 class RoomRequestAdmin(admin.ModelAdmin):
-    list_display = ['room_request_id', 'user', 'pre_room', 'new_room', 'request_date', 'status']
+    list_display = ['room_request_id', 'user', 'pre_room', 'new_room', 'created_at', 'status']
 
 @admin.register(FreezeHistory)
 class FreezeHistoryAdmin(admin.ModelAdmin):
-    list_display = ['freeze_history_id','user','complained_size','start_date','end_date','days']
+    list_display = ['freeze_history_id','user','complained_size','created_at','end_date','days']

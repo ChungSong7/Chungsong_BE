@@ -141,7 +141,7 @@ class NoticeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model=Notice
-        fields=['notice_id','user','category','noticed_at','checked', #'root_id'
+        fields=['notice_id','user','category','created_at','checked', #'root_id'
                 'message','content','notice_title','post_id','comment_id']
         
     def get_message(self, instance):

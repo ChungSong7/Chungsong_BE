@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from users.authentications import extract_user_from_jwt
 from posts.models import Post,Comment
 from posts.serializers import PostSerializer
+from boards.paginations import CustomCursorPagination
 from .school_list import SCHOOL_LIST
 
 from datetime import timedelta
@@ -24,11 +25,12 @@ class NewUserView(APIView):
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
 
-    #가입 신청 list 조회
+    # 가입 신청 list 조회
     def get(self, request):
-        queryset = User.objects.filter(status='인증대기')  # 필터링된 쿼리셋 가져오기
-        serializer = UserSerializer(queryset, many=True)  # 쿼리셋을 직렬화하여 Serializer 객체 생성
-        return Response(serializer.data, status=status.HTTP_200_OK)  # 직렬화된 데이터를 Response에 담아 반환
+        paginator = CustomCursorPagination()
+        paginated_queryset = paginator.paginate_queryset(self.queryset, request)
+        serializer = self.serializer_class(paginated_queryset, many=True)  # 쿼리셋을 직렬화하여 Serializer 객체 생성
+        return paginator.get_paginated_response(serializer.data)  # 직렬화된 데이터를 Response에 담아 반환
 
     #가입 허가 처리
     def patch(self, request):
@@ -37,7 +39,7 @@ class NewUserView(APIView):
         new_user.status='사생인증'
         new_user.save()
 
-        serializer = UserSerializer(new_user)
+        serializer = self.serializer_class(new_user)
         return Response(serializer.data)
 
     #가입 거부 처리
@@ -49,7 +51,7 @@ class NewUserView(APIView):
         return Response({'message':f'{new_user.username} 님이 가입 거부 처리되었습니다.'},status=status.HTTP_204_NO_CONTENT)
 
 class RoomRequestView(APIView):
-    #serializer_class = RoomRequestSerializer
+    serializer_class = RoomRequestSerializer
     permission_classes = [RequestPermission]
 
     #호수변동 신청 create
@@ -61,7 +63,7 @@ class RoomRequestView(APIView):
                 'pre_room': user.room,
                 'new_room': new_room,
             }
-        serializer = RoomRequestSerializer(data=data)
+        serializer = self.serializer_class(data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()  # 호수 변동 신청 생성
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -69,8 +71,11 @@ class RoomRequestView(APIView):
     #호수변동 신청 list 조회
     def get(self, request):
         queryset=RoomRequest.objects.all()
-        serializer=RoomRequestSerializer(queryset,many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        paginator = CustomCursorPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        serializer=self.serializer_class(paginated_queryset,many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
     #호수변동 처리
     def patch(self,request):
         room_request_id=request.data['room_request_id']
@@ -118,9 +123,11 @@ class FreezeView(APIView):
     def get(self,request,user_id,*args, **kwargs):
         user_id=self.kwargs['user_id']
         user = get_object_or_404(User, user_id=user_id)
-        frozen_histories = FreezeHistory.objects.filter(user=user).order_by('-start_date')
-        serializer = FrozenHistorySerializer(frozen_histories, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        queryset = FreezeHistory.objects.filter(user=user).order_by('-created_at')
+        paginator = CustomCursorPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        serializer = FrozenHistorySerializer(paginated_queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 class AdminDeleteView(APIView):
     permission_classes=[IsAdmin]
@@ -151,9 +158,12 @@ class AdminDeleteView(APIView):
         deleted_comments = Comment.objects.filter(display=False)
         deleted_comment_posts = deleted_comments.values_list('post_id', flat=True).distinct()
         deleted_posts = Post.objects.filter(Q(display=False)|Q(post_id__in=deleted_comment_posts)).order_by('-created_at').distinct()
-        serializer = PostSerializer(deleted_posts, many=True)
+        
+        paginator = CustomCursorPagination()
+        paginated_queryset = paginator.paginate_queryset(deleted_posts, request)
+        serializer = PostSerializer(paginated_queryset, many=True)
 
-        return Response(serializer.data)
+        return paginator.get_paginated_response(serializer.data)
     
 class SchoolListView(APIView):
     def get(sefl,request):

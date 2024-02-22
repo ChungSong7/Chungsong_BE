@@ -22,6 +22,7 @@ from posts.models import Post,Comment
 from posts.serializers import PostSerializer
 
 from boards.permissions import IsOkayBlockedPatch
+from boards.paginations import CustomCursorPagination
 import random
 
 
@@ -202,6 +203,8 @@ class UserMatchingView(APIView):
 class MyPostView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = PostSerializer
+    pagination_class = CustomCursorPagination
+
     def get_queryset(self):
         user=extract_user_from_jwt(self.request)
         my_posts=Post.objects.filter(author=user, display=True)
@@ -211,6 +214,7 @@ class MyPostView(generics.ListAPIView):
 class MyCommentView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = PostSerializer
+    pagination_class = CustomCursorPagination
     def get_queryset(self):
         user= extract_user_from_jwt(self.request)
 
@@ -219,16 +223,15 @@ class MyCommentView(generics.ListAPIView):
 
         return Post.objects.filter(post_id__in=commented_posts).order_by('-created_at')
 
-class MyNoticeView(APIView):
+class MyNoticeView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = NoticeSerializer
-    def get(self, request):
-        user=extract_user_from_jwt(request)
-        notices = Notice.objects.filter(user=user)
+    pagination_class=CustomCursorPagination
 
-        # 시리얼라이저를 사용하여 알림 데이터 직렬화
-        serializer = self.serializer_class(notices, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        user = extract_user_from_jwt(self.request)
+        return Notice.objects.filter(user=user).order_by('-created_at')
+    
 
 class SendEmailCodeView(APIView):
     def post(self,request):

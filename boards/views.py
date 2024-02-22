@@ -11,6 +11,7 @@ from posts.serializers import PostSerializer
 
 from django.utils import timezone
 
+from .paginations import CustomCursorPagination
 
 #게시판 종류 list 조회
 class BoardView(APIView):
@@ -18,11 +19,14 @@ class BoardView(APIView):
         queryset=Board.objects.all()
         serializer=BoardSerializer(queryset,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
+    
+
 
 
 class BoardPostsView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = PostSerializer
+    pagination_class=CustomCursorPagination
     
     #게시판 별 게시글 list 조회
     def get_queryset(self):
@@ -32,6 +36,8 @@ class BoardPostsView(generics.ListAPIView):
 class HotPostView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = PostSerializer
+    pagination_class = CustomCursorPagination
+
     def get_queryset(self):
         # 현재 시간 기준으로 이전 시간을 계산 (예: 7일 전)
         previous_date = timezone.now() - timezone.timedelta(days=7)

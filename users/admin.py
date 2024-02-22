@@ -5,7 +5,7 @@ from .models import User,DeletedUser,EmailVarify,Notice
 class CustomUserAdmin(UserAdmin):
     # 유저 리스트에 보여질 필드 지정
     list_display = ('user_id','username', 'nickname','email','room','room_card','school',
-                    'status','suspension_end_date','complained','profile_image') 
+                    'created_at','status','suspension_end_date','complained','profile_image') 
 
 admin.site.register(User, CustomUserAdmin)
 
@@ -20,4 +20,4 @@ class EmailVarifyAdmin(admin.ModelAdmin):
 
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
-    list_display=['notice_id','user','root_id','category','noticed_at','checked']
+    list_display=['notice_id','user','root_id','category','created_at','checked']
