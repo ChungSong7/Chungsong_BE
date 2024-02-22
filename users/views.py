@@ -5,7 +5,7 @@ from rest_framework import status,generics
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 
-from .serializers import UserSerializer,NoticeSerializer
+from .serializers import UserSerializer,NoticeSerializer,UserUpdateSerializer
 from .models import User,DeletedUser,EmailVarify,Notice
 from .authentications import create_access_token,create_refresh_token,decode_access_token,decode_refresh_token,extract_user_from_jwt
 import re
@@ -99,6 +99,24 @@ class UserInfoView(APIView):
         response = Response({'message': '회원탈퇴가 성공적으로 처리되었습니다.'}, status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie('refresh_token')
         return response
+    
+    def patch(self,request):
+        serializer = UserUpdateSerializer(data=request.data)
+        if serializer.is_valid():
+            # 현재 요청을 보낸 사용자
+            validated_data = serializer.validated_data
+            username = validated_data.get('username')
+            room = validated_data.get('room')
+            email = validated_data.get('email')
+            user = get_object_or_404(User, username=username, room=room, email=email)
+            try:
+                # 유저 정보 업데이트
+                response= serializer.update(user, validated_data)
+                return response
+            except Exception as e:
+                return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 #access_token 재발급 API
