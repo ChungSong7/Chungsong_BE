@@ -48,6 +48,7 @@ class Comment(models.Model):
     warn_size = models.IntegerField(verbose_name='신고수',default=0)
     anon_status = models.BooleanField(verbose_name='익명여부',default=True)
     display=models.BooleanField(verbose_name='사용자화면',default=True)
+    up_comment_id=models.UUIDField(verbose_name='어미 댓글',blank=True,null=True,default=None)
 
 #게시글 좋아하는 사람
 class CommentLiker(models.Model):

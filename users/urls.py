@@ -2,7 +2,7 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from .views import SignupView,LoginView,UserInfoView,LogoutView,RefreshJWTTokenView,NickDupCheckView,UserMatchingView
-from .views import MyPostView,MyCommentView,SendEmailCodeView,CheckEmailCodeView
+from .views import MyPostView,MyCommentView,SendEmailCodeView,CheckEmailCodeView,MyNoticeView
 urlpatterns = [
     path('signup/', SignupView.as_view(),name='SignUp'),
     path('login/',LoginView.as_view(),name='Login'),
@@ -15,5 +15,6 @@ urlpatterns = [
     path('my_comments/',MyCommentView.as_view(), name='MyComment'),
     path('send_emailcode/',SendEmailCodeView.as_view(),name='SendEmailCode'),
     path('check_emailcode/',CheckEmailCodeView.as_view(),name='CheckEmailCode'),
+    path('my_notices/',MyNoticeView.as_view(),name='MyNotice'),
 ] + static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
 

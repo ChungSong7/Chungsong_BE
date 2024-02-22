@@ -1,7 +1,7 @@
 from rest_framework import  status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from users.models import User
+from users.models import User,Notice
 from users.serializers import UserSerializer
 from .permissions import IsAdmin,RequestPermission
 from .serializers import RoomRequestSerializer,FrozenHistorySerializer
@@ -98,12 +98,20 @@ class FreezeView(APIView):
         user.complained=0 #피신고수 청산
         user.save()
         # 정지 히스토리 객체 생성
-        FreezeHistory.objects.create(
+        freeze=FreezeHistory.objects.create(
             user=user,
             complained_size=complained_size,
             end_date=user.suspension_end_date, 
             days=int(freeze_days)
         )
+        notice_data = {
+            'user': freeze.user,  # 정지 먹은 유저
+            'root_id': freeze.freeze_history_id,  # 정지 기록의 고유 ID
+            'category': '정지',  # 알림 카테고리
+        }
+        Notice.objects.create(**notice_data)
+
+
         return Response({"message": f"{user.username}님이 {freeze_days}일간 정지되었습니다."}, status=status.HTTP_200_OK)
     
     #정지 이력 조회

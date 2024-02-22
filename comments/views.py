@@ -33,6 +33,7 @@ class CommentView(ListAPIView,CreateAPIView):
         if response:
             return response
         context={'post_id': post_id,
+                'up_comment_id':request.data.get('up_comment_id'),
                 'request':request} #serializer에 넘겨줄 dic
 
         user=extract_user_from_jwt(request)

@@ -1,10 +1,13 @@
 import re
 from rest_framework import serializers
-from .models import User
+from .models import User,Notice
 from django.contrib.auth.hashers import make_password,check_password
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
+
+from administrators.models import FreezeHistory
+from posts.models import Comment,Post
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -118,3 +121,89 @@ class UserUpdateSerializer(serializers.Serializer):
             instance.set_password(password)
             instance.save()
             return Response({"message": "password updated successfully."}, status=status.HTTP_200_OK)
+        
+class NoticeSerializer(serializers.ModelSerializer):
+    message=serializers.SerializerMethodField() #카테고리에 따라
+    content=serializers.SerializerMethodField() #그 구체적 댓or 내용
+    notice_title=serializers.SerializerMethodField() #자유게시판 or 정지 
+
+    comment_id = serializers.SerializerMethodField(required=False,allow_null=True)
+    post_id = serializers.SerializerMethodField(required=False,allow_null=True)
+
+    class Meta:
+        model=Notice
+        fields=['notice_id','user','category','noticed_at','checked', #'root_id'
+                'message','content','notice_title','post_id','comment_id']
+        
+    def get_message(self, instance):
+        if instance.category == '댓글':
+            return "내가 쓴 글에 댓글이 달렸어요!"
+        elif instance.category == '대댓글':
+            return "내가 쓴 댓글에 대댓글이 달렸어요!"
+        elif instance.category == '정지':
+            freeze=get_object_or_404(FreezeHistory,freeze_history_id=instance.root_id)
+            return f"{freeze.days}일 정지 처분을 받았습니다. {freeze.days}일 동안 게시글 및 댓글을 작성할 수 없습니다."
+        elif instance.category== '웅성웅성':
+            return "내가 쓴 글이 웅성웅성에 들어갔어요!"
+        else:
+            return "알림 카테고리가 잘못되어 메세지를 생성할 수 없습니다."
+    
+    def get_content(self,instance):
+        if instance.category=='댓글':
+            comment=get_object_or_404(Comment,comment_id=instance.root_id)
+            return comment.content
+        elif instance.category=='대댓글':
+            comment=get_object_or_404(Comment,comment_id=instance.root_id)
+            return comment.content
+        elif instance.category == '정지':
+            return None
+        elif instance.category=='웅성웅성':
+            post=get_object_or_404(Post,post_id=instance.root_id)
+            return post.title
+        else:
+            return None
+    
+    def get_notice_title(self,instance):
+        if instance.category=='댓글':
+            comment=get_object_or_404(Comment,comment_id=instance.root_id)
+            return comment.post.board.board_name
+        if instance.category=='대댓글':
+            comment=get_object_or_404(Comment,comment_id=instance.root_id)
+            return comment.post.board.board_name
+        elif instance.category == '정지':
+            return '정지 처분'
+        elif instance.category=='웅성웅성':
+            post=get_object_or_404(Post,post_id=instance.root_id)
+            return post.board.board_name
+        else:
+            return None
+    def get_comment_id(self,instance):
+        if instance.category=='댓글':
+            comment=get_object_or_404(Comment,comment_id=instance.root_id)
+            return comment.comment_id
+        elif instance.category=='대댓글':
+            comment=get_object_or_404(Comment,comment_id=instance.root_id)
+            return comment.comment_id
+        elif instance.category == '정지':
+            return None
+        else:
+            return None
+    def get_post_id(self,instance):
+        if instance.category=='댓글':
+            comment=get_object_or_404(Comment,comment_id=instance.root_id)
+            return comment.post.post_id
+        elif instance.category=='대댓글':
+            comment=get_object_or_404(Comment,comment_id=instance.root_id)
+            return comment.comment_id
+        elif instance.category == '정지':
+            return None
+        elif instance.category=='웅성웅성':
+            post=get_object_or_404(Post,post_id=instance.root_id)
+            return post.post_id
+        else:
+            return None
+        
+        #'content': comment.content,  # 댓글 내용
+            #'notice_title':post.board.board_name,
+            #'comment_id':comment.comment_id,
+            #'post_id':post.post_id,

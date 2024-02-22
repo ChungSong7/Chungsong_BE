@@ -5,8 +5,8 @@ from rest_framework import status,generics
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 
-from .serializers import UserSerializer
-from .models import User,DeletedUser,EmailVarify
+from .serializers import UserSerializer,NoticeSerializer
+from .models import User,DeletedUser,EmailVarify,Notice
 from .authentications import create_access_token,create_refresh_token,decode_access_token,decode_refresh_token,extract_user_from_jwt
 import re
 from django.contrib.auth.hashers import make_password,check_password
@@ -100,7 +100,6 @@ class UserInfoView(APIView):
         response.delete_cookie('refresh_token')
         return response
 
-    
 
 #access_token 재발급 API
 class RefreshJWTTokenView(APIView):
@@ -190,6 +189,17 @@ class MyCommentView(generics.ListAPIView):
 
         return Post.objects.filter(post_id__in=commented_posts).order_by('-created_at')
 
+class MyNoticeView(APIView):
+    permission_classes=[IsOkayBlockedPatch]
+    serializer_class = NoticeSerializer
+    def get(self, request):
+        user=extract_user_from_jwt(request)
+        notices = Notice.objects.filter(user=user)
+
+        # 시리얼라이저를 사용하여 알림 데이터 직렬화
+        serializer = self.serializer_class(notices, many=True)
+        return Response(serializer.data)
+
 class SendEmailCodeView(APIView):
     def post(self,request):
         # 요청에서 이메일 주소 받기
@@ -200,7 +210,7 @@ class SendEmailCodeView(APIView):
         except ValidationError:
             return Response({'message':'올바른 이메일 형식이 아닙니다.'})
         
-        #4자리 랜덤 코드 생성
+        #6자리 랜덤 코드 생성
         code = ''.join(random.choices('0123456789', k=6))
 
         #EmailVarify 객체 생성 or 업데이트
@@ -233,7 +243,7 @@ class CheckEmailCodeView(APIView):
             email_varify_obj = EmailVarify.objects.get(email=email)
             # 현재 시간과 객체의 생성 시간의 차이 계산 (분 단위로 변환)
             time_difference_minutes = (timezone.now() - email_varify_obj.created_at).total_seconds() / 60
-            # 시간 차이가 5분 미만이면 코드 비교
+            # 시간 차이가 3분 미만이면 코드 비교
             if time_difference_minutes < 3:
                 if email_varify_obj.code == code: #인증코드 일치
                     email_varify_obj.delete()
