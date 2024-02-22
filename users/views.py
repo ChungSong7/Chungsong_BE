@@ -150,9 +150,9 @@ class UserMatchingView(APIView):
 
             #email mask
             email_id, domain = email.split('@')
-            masked_email_id = email_id[:4] + '*' * (len(email_id) - 4)
-            masked_email = masked_email_id + '@' + domain
-
+            #masked_email_id = email_id[:4] + '*' * (len(email_id) - 4)
+            #masked_email = masked_email_id + '@' + domain
+            masked_email='______' + '@' + domain
             return Response({'message':'조회 성공','masked_email': masked_email})
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=404)
@@ -177,7 +177,7 @@ class MyPostView(generics.ListAPIView):
         my_posts=Post.objects.filter(author=user, display=True)
         # 현재 요청한 사용자의 게시글 중 display 속성이 True인 것들만 필터링
         return my_posts.order_by('-created_at')
-    
+
 class MyCommentView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = PostSerializer
@@ -231,7 +231,7 @@ class SendEmailCodeView(APIView):
             fail_silently=False, 
         )
         return Response({"message": "인증 번호 전송"}, status=status.HTTP_200_OK)
-    
+
 
 class CheckEmailCodeView(APIView):
     def delete(self,request):
