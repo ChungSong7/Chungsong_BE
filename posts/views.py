@@ -4,7 +4,8 @@ from rest_framework import status
 from .serializers import PostSerializer
 from users.authentications import extract_user_from_jwt
 from django.shortcuts import get_object_or_404
-from .models import Post,PostLiker,Comment
+from .models import Post,PostLiker,Comment,Board
+from users.models import Notice
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
@@ -40,6 +41,11 @@ class PostCreateView(CreateAPIView):
     serializer_class = PostSerializer
     def post(self, request, board_id, *args, **kwargs):
         # 게시판 객체 가져오기
+        board = get_object_or_404(Board, board_id=board_id)
+        user = extract_user_from_jwt(request)
+        if board.board_name=='공지사항':
+            if user.status not in ['학생회','관리자']:
+                return Response({"error": "공지사항에는 학생회만 글을 쓸 수 있습니다."}, status=status.HTTP_400_BAD_REQUEST)
         # 시리얼라이저에 context 전달
         serializer = self.get_serializer(data=request.data, context={'board_id': board_id, 'request': request})
         serializer.is_valid(raise_exception=True)
@@ -109,4 +115,12 @@ class PostLikeView(UpdateAPIView):
             #게시글 좋아요 수 조정
             post.like_size=post.likers.count()
             post.save()
+            #10번째 좋아요였으면 웅성웅성 갔다는 알림 생성!
+            if post.like_size==10:
+                notice_data={
+                    'user':post.author, #좋아요 받은 게시글 작성자
+                    'root_id':post.post_id, #게시글 고유 ID
+                    'category':'웅성웅성', #알림 카테고리
+                }
+                Notice.objects.create(**notice_data)
             return Response({'message':'게시글을 좋아했습니다.'})

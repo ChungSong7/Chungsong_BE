@@ -18,52 +18,51 @@ class ComplainSerializer(serializers.ModelSerializer):
     
     comp_user_id=serializers.UUIDField(required=False)
     comped_user_id=serializers.UUIDField(required=False)
+
     tag=serializers.SerializerMethodField(required=False)
 
     class Meta:
         model=Complain
-        fields=['complain_id','comp_user_id','comped_user_id','comp_date','status',
+        fields=['complain_id','comp_user_id','comped_user_id','created_at','status',
                 'category','comp_post_id','comp_comment_id','tag']
         
     def get_tag(self,obj):
-        post = Post.objects.get(post_id=obj.comp_post_id)
         if obj.comp_comment_id:
-            return f"{post.board.board_name} 댓글"
+            comment = Comment.objects.get(comment_id=obj.comp_comment_id)
+            return f"{comment.post.board.board_name} 댓글"
         elif obj.comp_post_id:
+            post = Post.objects.get(post_id=obj.comp_post_id)
             return f"{post.board.board_name} 게시글"
 
     def validate(self, data):  #게시글, 댓글 중 1 신고 맞지? 확인
         comp_post_id = data.get('comp_post_id')
         comp_comment_id = data.get('comp_comment_id')
         comp_user=extract_user_from_jwt(self.context['request']) #신고자
-        if (not comp_post_id) and (not comp_comment_id):
-            raise serializers.ValidationError("게시글 또는 댓글을 지정해야 합니다.")
-        # 게시글과 댓글이 동시에 지정된 경우 예외 처리
-        if (comp_post_id is not None) and (comp_comment_id is not None):
-            raise serializers.ValidationError("게시글과 댓글을 동시에 지정할 수 없습니다.")
-        if comp_comment_id:
+        
+        if comp_comment_id and not comp_post_id:
             try:
                 comped_comment=Comment.objects.get(comment_id=comp_comment_id) #영구삭제는 아닌데,
                 if not comped_comment.display: #display 가 False일때
-                    raise serializers.ValidationError("이미 삭제된 댓글입니다.")
+                    raise serializers.ValidationError({'error':'이미 삭제된 댓글입니다.'})
                 if comped_comment.writer==comp_user:
-                    raise serializers.ValidationError("자신의 댓글은 신고 할 수 없습니다.")
+                    raise serializers.ValidationError({'error':'자신의 댓글은 신고 할 수 없습니다.'})
                 if Complain.objects.filter(comp_comment=comped_comment,comp_user=comp_user).exists():
-                    raise serializers.ValidationError('이미 신고한 댓글입니다.')
+                    raise serializers.ValidationError({'error':'이미 신고한 댓글입니다.'})
             except ObjectDoesNotExist: #영구삭제일 때
-                raise serializers.ValidationError("이미 삭제된 댓글입니다.")
-        if comp_post_id:
+                raise serializers.ValidationError({'error':'이미 삭제된 댓글입니다.'})
+        elif comp_post_id and not comp_comment_id:
             try:
                 comped_post=Post.objects.get(post_id=comp_post_id) #영구삭제는 아닌데,
                 if not comped_post.display: #display 가 False일때
-                    raise serializers.ValidationError("이미 삭제된 게시글입니다.")
+                    raise serializers.ValidationError({'error':'이미 삭제된 게시글입니다.'})
                 if comped_post.author==comp_user:
-                    raise serializers.ValidationError("자신의 게시글은 신고 할 수 없습니다.")
+                    raise serializers.ValidationError({'error':'자신의 게시글은 신고 할 수 없습니다.'})
                 if Complain.objects.filter(comp_post=comped_post,comp_user=comp_user).exists():
-                    raise serializers.ValidationError('이미 신고한 게시글입니다.')
+                    raise serializers.ValidationError({'error':'이미 신고한 게시글입니다.'})
             except ObjectDoesNotExist: #영구삭제일 때
-                raise serializers.ValidationError("이미 삭제된 게시글입니다.")
-
+                raise serializers.ValidationError({'error':'이미 삭제된 게시글입니다.'})
+        else:
+            raise serializers.ValidationError({'error':'게시글과 댓글 중 하나만 신고하세요.'})
         return data
 
     def create(self, validated_data):

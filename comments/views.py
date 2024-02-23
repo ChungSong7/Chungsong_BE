@@ -10,12 +10,14 @@ from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 from posts.views import is_exist
 from boards.permissions import IsOkayBlockedPatch,IsOkayLike
+from boards.paginations import CustomCursorPagination
 
 #GET 댓글list 조회  // POST 댓글쓰기
 class CommentView(ListAPIView,CreateAPIView):
 
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = CommentSerializer
+    pagination_class = CustomCursorPagination
     
     #GET 게시글 별 댓글list 조회
     def get(self, request, post_id, *args, **kwargs):
@@ -23,9 +25,12 @@ class CommentView(ListAPIView,CreateAPIView):
         if response:
             return response  # 오류 응답이 반환되었을 때 바로 반환
         # 나머지 로직
-        queryset = Comment.objects.filter(post_id=post_id, display=True)
-        serializer = CommentSerializer(queryset, many=True)
-        return Response(serializer.data)
+        queryset = Comment.objects.filter(post_id=post_id)
+        paginator = CustomCursorPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        serializer = self.serializer_class(paginated_queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
 
     #POST 댓글 작성
     def post(self, request, post_id, *args, **kwargs):
@@ -33,6 +38,7 @@ class CommentView(ListAPIView,CreateAPIView):
         if response:
             return response
         context={'post_id': post_id,
+                'up_comment_id':request.data.get('up_comment_id'),
                 'request':request} #serializer에 넘겨줄 dic
 
         user=extract_user_from_jwt(request)

@@ -9,8 +9,8 @@ class RoomRequestSerializer(serializers.ModelSerializer):
     user_id=serializers.CharField(source='user.user_id',required=False)
     class Meta:
         model = RoomRequest
-        fields = ['room_request_id','user','user_id', 'pre_room', 'new_room', 'request_date', 'status','nickname']
-        read_only_fields = ['request_date', 'status']
+        fields = ['room_request_id','user','user_id', 'pre_room', 'new_room', 'created_at', 'status','nickname']
+        read_only_fields = ['created_at', 'status']
     def validate(self,data):
         pre_room=data.get('pre_room')
         new_room=data.get('new_room')
@@ -40,4 +40,4 @@ class FrozenHistorySerializer(serializers.ModelSerializer):
     user_id=serializers.CharField(source='user.user_id',required=False)
     class Meta:
         model = FreezeHistory
-        fields = ['freeze_history_id','user','user_id','complained_size','start_date','end_date','days']
+        fields = ['freeze_history_id','user','user_id','complained_size','created_at','end_date','days']

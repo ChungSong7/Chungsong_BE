@@ -5,8 +5,8 @@ from rest_framework import status,generics
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 
-from .serializers import UserSerializer
-from .models import User,DeletedUser,EmailVarify
+from .serializers import UserSerializer,NoticeSerializer,UserUpdateSerializer
+from .models import User,DeletedUser,EmailVarify,Notice
 from .authentications import create_access_token,create_refresh_token,decode_access_token,decode_refresh_token,extract_user_from_jwt
 import re
 from django.contrib.auth.hashers import make_password,check_password
@@ -22,6 +22,7 @@ from posts.models import Post,Comment
 from posts.serializers import PostSerializer
 
 from boards.permissions import IsOkayBlockedPatch
+from boards.paginations import CustomCursorPagination
 import random
 
 
@@ -99,8 +100,25 @@ class UserInfoView(APIView):
         response = Response({'message': '회원탈퇴가 성공적으로 처리되었습니다.'}, status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie('refresh_token')
         return response
-
     
+    def patch(self,request):
+        serializer = UserUpdateSerializer(data=request.data)
+        if serializer.is_valid():
+            # 현재 요청을 보낸 사용자
+            validated_data = serializer.validated_data
+            username = validated_data.get('username')
+            room = validated_data.get('room')
+            email = validated_data.get('email')
+            user = get_object_or_404(User, username=username, room=room, email=email)
+            try:
+                # 유저 정보 업데이트
+                response= serializer.update(user, validated_data)
+                return response
+            except Exception as e:
+                return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 #access_token 재발급 API
 class RefreshJWTTokenView(APIView):
@@ -139,6 +157,18 @@ class NickDupCheckView(APIView):
                 return Response({'message':'The nickname is available for use'})
         return Response({"message":"Nickname should be Korean without spaces"})
 
+class EmailDupCheckView(APIView): #이메일 바꾸기 전,회원가입 시 이메일 인증 전 호출
+    def get(self, request):
+        email=request.GET.get('email', None)
+        if not email:
+            return Response({'error':'이메일을 입력해주세요'})
+        if not re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', email):
+            return Response({'error':'이메일 형식이 맞지 않습니다.'})
+        try:
+            User.objects.get(email=email) #get이 객체 없으면 얘외 발생 시켜주는 애라서 ㄱㅊ
+            return Response({'message':'이미 사용 중인 이메일입니다.'})
+        except User.DoesNotExist:
+            return Response({'message':'사용 가능한 이메일입니다.'})
 
 class UserMatchingView(APIView):
     def get(self, request):
@@ -151,9 +181,9 @@ class UserMatchingView(APIView):
 
             #email mask
             email_id, domain = email.split('@')
-            masked_email_id = email_id[:4] + '*' * (len(email_id) - 4)
-            masked_email = masked_email_id + '@' + domain
-
+            #masked_email_id = email_id[:4] + '*' * (len(email_id) - 4)
+            #masked_email = masked_email_id + '@' + domain
+            masked_email='______' + '@' + domain
             return Response({'message':'조회 성공','masked_email': masked_email})
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=404)
@@ -173,24 +203,35 @@ class UserMatchingView(APIView):
 class MyPostView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = PostSerializer
+    pagination_class = CustomCursorPagination
+
     def get_queryset(self):
         user=extract_user_from_jwt(self.request)
         my_posts=Post.objects.filter(author=user, display=True)
         # 현재 요청한 사용자의 게시글 중 display 속성이 True인 것들만 필터링
         return my_posts.order_by('-created_at')
-    
+
 class MyCommentView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = PostSerializer
+    pagination_class = CustomCursorPagination
     def get_queryset(self):
         user= extract_user_from_jwt(self.request)
 
         my_comments = Comment.objects.filter(writer=user, display=True)
         commented_posts = my_comments.values_list('post_id', flat=True).distinct()
-        print(commented_posts)
-        print(type(commented_posts))
 
         return Post.objects.filter(post_id__in=commented_posts).order_by('-created_at')
+
+class MyNoticeView(generics.ListAPIView):
+    permission_classes=[IsOkayBlockedPatch]
+    serializer_class = NoticeSerializer
+    pagination_class=CustomCursorPagination
+
+    def get_queryset(self):
+        user = extract_user_from_jwt(self.request)
+        return Notice.objects.filter(user=user).order_by('-created_at')
+    
 
 class SendEmailCodeView(APIView):
     def post(self,request):
@@ -202,7 +243,7 @@ class SendEmailCodeView(APIView):
         except ValidationError:
             return Response({'message':'올바른 이메일 형식이 아닙니다.'})
         
-        #4자리 랜덤 코드 생성
+        #6자리 랜덤 코드 생성
         code = ''.join(random.choices('0123456789', k=6))
 
         #EmailVarify 객체 생성 or 업데이트
@@ -223,7 +264,7 @@ class SendEmailCodeView(APIView):
             fail_silently=False, 
         )
         return Response({"message": "인증 번호 전송"}, status=status.HTTP_200_OK)
-    
+
 
 class CheckEmailCodeView(APIView):
     def delete(self,request):
@@ -235,7 +276,7 @@ class CheckEmailCodeView(APIView):
             email_varify_obj = EmailVarify.objects.get(email=email)
             # 현재 시간과 객체의 생성 시간의 차이 계산 (분 단위로 변환)
             time_difference_minutes = (timezone.now() - email_varify_obj.created_at).total_seconds() / 60
-            # 시간 차이가 5분 미만이면 코드 비교
+            # 시간 차이가 3분 미만이면 코드 비교
             if time_difference_minutes < 3:
                 if email_varify_obj.code == code: #인증코드 일치
                     email_varify_obj.delete()

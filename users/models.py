@@ -13,6 +13,7 @@ class User(AbstractUser):
     school=models.CharField(verbose_name='학교',max_length=255)
     room_card=models.ImageField(verbose_name='호실카드 사진')
     profile_image=models.IntegerField(verbose_name='프로필 캐릭터',default=0)
+    created_at=models.DateTimeField(verbose_name='가입 날짜',default=timezone.now)
     complained=models.IntegerField(verbose_name='피신고수',default=0)
     STATUS_CHOICES=[('인증대기','인증대기'),
                     ('사생인증','사생인증'),
@@ -49,3 +50,13 @@ class EmailVarify(models.Model):
     email=models.EmailField(verbose_name='이메일',max_length=255,unique=True)
     code=models.CharField(verbose_name='인증번호',max_length=6)
     created_at=models.DateTimeField(verbose_name='인증코드 생성시간',auto_now_add=True)
+
+class Notice(models.Model):
+    notice_id=models.UUIDField(verbose_name='고유번호',primary_key=True, default=uuid.uuid4,unique=True,editable=False)
+    user=models.ForeignKey(User,verbose_name='사용자',on_delete=models.CASCADE,related_name='notices')
+    root_id=models.UUIDField(verbose_name='루트 객체 uuid')
+    category=models.CharField(verbose_name='알림 카테고리',max_length=30)#웅성웅성, 댓글, 대댓글, 정지
+    created_at=models.DateTimeField(verbose_name='알림 날짜',auto_now_add=True)
+    checked=models.BooleanField(verbose_name='확인 여부',default=False)
+
+
