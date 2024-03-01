@@ -5,6 +5,7 @@ from django.contrib.auth.hashers import make_password,check_password
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
+from boards.models import Board
 
 from administrators.models import FreezeHistory
 from posts.models import Comment,Post
@@ -47,6 +48,9 @@ class UserSerializer(serializers.ModelSerializer):
         instance = User.objects.create(**validated_data)
         instance.set_password(validated_data['password']) #비밀번호 해싱
         instance.save()
+        # 존재하지 않으면 새로운 Board 객체 생성
+        if not Board.objects.filter(board_name=instance.school).exists():
+            Board.objects.create(board_name=instance.school)
         return instance
 
 '''

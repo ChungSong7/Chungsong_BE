@@ -11,7 +11,7 @@ class User(AbstractUser):
         return os.path.join('room_card/', filename)
 
     user_id=models.UUIDField(verbose_name='고유번호',primary_key=True, default=uuid.uuid4, unique=True,editable=False)
-    nickname=models.CharField(verbose_name='닉네임', max_length=255)
+    nickname=models.CharField(verbose_name='닉네임', max_length=255,unique=True)
     room=models.PositiveSmallIntegerField(verbose_name='호실수')
     email=models.EmailField(verbose_name='이메일',max_length=255,unique=True)
     password=models.CharField(verbose_name='비밀번호',max_length=255)
