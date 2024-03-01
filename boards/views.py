@@ -15,6 +15,9 @@ from .paginations import CustomCursorPagination
 
 #게시판 종류 list 조회
 class BoardView(APIView):
+
+    permission_classes=[IsOkayBlockedPatch]
+
     def get(self,request):
         queryset=Board.objects.all()
         serializer=BoardSerializer(queryset,many=True)
