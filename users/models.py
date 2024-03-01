@@ -1,9 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
-import uuid
+import uuid, os
 
 class User(AbstractUser):
+
+    def image_upload_path(instance, filename):
+        ext = filename.split('.')[-1]
+        filename = f"{instance.username}_{instance.room}.{ext}"
+        return os.path.join('room_card/', filename)
+
     user_id=models.UUIDField(verbose_name='고유번호',primary_key=True, default=uuid.uuid4, unique=True,editable=False)
     nickname=models.CharField(verbose_name='닉네임', max_length=255)
     room=models.PositiveSmallIntegerField(verbose_name='호실수')
@@ -11,7 +17,7 @@ class User(AbstractUser):
     password=models.CharField(verbose_name='비밀번호',max_length=255)
     username=models.CharField(verbose_name='이름', max_length=255)
     school=models.CharField(verbose_name='학교',max_length=255)
-    room_card=models.ImageField(verbose_name='호실카드 사진')
+    room_card=models.ImageField(verbose_name='호실카드 사진', upload_to=image_upload_path)
     profile_image=models.IntegerField(verbose_name='프로필 캐릭터',default=0)
     created_at=models.DateTimeField(verbose_name='가입 날짜',default=timezone.now)
     complained=models.IntegerField(verbose_name='피신고수',default=0)
@@ -31,7 +37,6 @@ class User(AbstractUser):
                 self.status = '사생인증'  # 정지 종료일이 지나면 상태를 '사생인증'으로 변경
                 self.save()
         
-
     
     USERNAME_FIELD='email' #email로 로그인할거니까! 
     REQUIRED_FIELDS=['nickname', 'room','username','school','room_card','profile_image']
