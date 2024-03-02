@@ -1,7 +1,7 @@
 from django.db import models
 from users.models import User
 from boards.models import Board
-import uuid
+import uuid,os
 
 
 #게시글
@@ -23,9 +23,19 @@ class Post(models.Model):
         return str(f"({self.board.board_name}: {self.post_id})")
 #이미지
 class Image(models.Model):
-    post = models.ForeignKey(Post,verbose_name='게시글', on_delete=models.CASCADE, related_name='images')
-    imgfile = models.ImageField(verbose_name='이미지파일',null=True,upload_to="",blank=True) #이미지업로드 경로 더 설정하자.
+
+    def image_upload_path(instance, filename):
+    # 파일 이름을 유니크한 UUID로 설정하거나 원하는 방식으로 변경할 수 있습니다.
+    # 여기서는 UUID와 확장자를 조합하여 파일 이름을 설정합니다.
+        ext = filename.split('.')[-1]
+        post=instance.post
+        filename = f"{post.post_id}_{instance.id}.{ext}"
+        return os.path.join(f'post_images/{post.board.board_name}/', filename)
     
+    #image_id=models.UUIDField(verbose_name='이미지ID', primary_key=True, default=uuid.uuid4, unique=True, editable=False)
+    post = models.ForeignKey(Post,verbose_name='게시글', on_delete=models.CASCADE, related_name='images')
+    imgfile = models.ImageField(verbose_name='이미지파일',null=True,blank=True,upload_to=image_upload_path) #이미지업로드 경로 더 설정하자.
+
     def __str__(self):
         return str(f"{self.post} \n {self.id}")
     

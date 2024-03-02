@@ -19,17 +19,17 @@ class IsOkayBlockedPatch(permissions.BasePermission):
         #POST 작성은 정지 회원 빼고 가능
         elif request.method=='POST':
             return user.status in ['사생인증','학생회','관리자']
-        #다른 HTTO 메서드는 거부! 
+        #다른 METHOD는 거부! 
         return False 
 
 #PATCH 좋아요 막으려고.
 class IsOkayLike(permissions.BasePermission):
     def has_permission(self, request, view):
         user=extract_user_from_jwt(request)
-        #GET 조회는 인증대기 빼고 전부 가능
+        
         if request.method=='PATCH':
             return user.status in ['사생인증','학생회','관리자']
-        #다른 HTTO 메서드는 거부! 
+        #다른 METHOD는 거부! 
         return False 
 '''
 

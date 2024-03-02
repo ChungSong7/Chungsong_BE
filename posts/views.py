@@ -41,6 +41,7 @@ class PostCreateView(CreateAPIView):
     serializer_class = PostSerializer
     def post(self, request, board_id, *args, **kwargs):
         # 게시판 객체 가져오기
+        print(request.data)
         board = get_object_or_404(Board, board_id=board_id)
         user = extract_user_from_jwt(request)
         if board.board_name=='공지사항':

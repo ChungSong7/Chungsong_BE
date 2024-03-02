@@ -8,6 +8,8 @@ from .serializers import RoomRequestSerializer,FrozenHistorySerializer
 from .models import RoomRequest,FreezeHistory
 from django.shortcuts import get_object_or_404
 from users.authentications import extract_user_from_jwt
+from boards.models import Board
+from boards.serializers import BoardSerializer
 from posts.models import Post,Comment
 from posts.serializers import PostSerializer
 from boards.paginations import CustomCursorPagination
@@ -166,5 +168,12 @@ class AdminDeleteView(APIView):
         return paginator.get_paginated_response(serializer.data)
     
 class SchoolListView(APIView):
-    def get(sefl,request):
+    def get(self,request):
         return Response(SCHOOL_LIST)
+    
+class SchoolBoardListView(APIView):
+    permission_classes=[IsAdmin]
+    def get(self,request):
+        queryset = Board.objects.filter(board_id__gte=10).order_by('board_name')
+        serializer=BoardSerializer(queryset,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
