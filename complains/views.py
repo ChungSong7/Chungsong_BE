@@ -9,6 +9,7 @@ from posts.models import Post,Comment
 from .serializers import ComplainSerializer
 
 from boards.paginations import CustomCursorPagination
+from users.authentications import extract_user_from_jwt
 
 from .permissions import IsOkayComplain
 from administrators.permissions import IsAdmin
@@ -18,13 +19,17 @@ class ComplainView(APIView):
     permission_classes = [IsOkayComplain]
     
     def get(self, request, *args, **kwargs):
-        complains = Complain.objects.all()
+        complains = Complain.objects.all().order_by('-created_at')
         paginator = CustomCursorPagination()
         paginated_queryset = paginator.paginate_queryset(complains, request)
         serializer = ComplainSerializer(paginated_queryset, many=True)
         return paginator.get_paginated_response(serializer.data)  # 직렬화된 데이터를 Response에 담아 반환
 
     def post(self, request, *args, **kwargs): #신고대상 id, jwt, category
+        user=extract_user_from_jwt(request)
+        if user.status=='정지':
+            return Response({'message':'정지 기간에는 신고할 수 없습니다.'})
+        
         serializer = ComplainSerializer(data=request.data,context={'request':request})
         if serializer.is_valid(raise_exception=True):
             serializer.save()
