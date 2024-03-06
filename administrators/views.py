@@ -103,11 +103,14 @@ class RoomRequestView(APIView):
         room_request_id=request.data['room_request_id']
         room_request=get_object_or_404(RoomRequest,room_request_id=room_request_id)
         room_request.status=1
-        room_request.user.room=room_request.new_room
-        room_request.user.save()
-        room_request.save()
-        return Response({'message':'호실 변동 처리 완료'},status=status.HTTP_204_NO_CONTENT)
-    
+        if request.data['answer']:
+            room_request.user.room=room_request.new_room
+            room_request.user.save()
+            room_request.save()
+            return Response({'message':'호실 변동 승인 처리 완료'},status=status.HTTP_200_OK)
+        else:
+            room_request.save()
+            return Response({'message':'호실 변동 거부 처리 완료'},status=status.HTTP_200_OK)
 
 class FreezeView(APIView):
     permission_classes = [IsAdmin]
