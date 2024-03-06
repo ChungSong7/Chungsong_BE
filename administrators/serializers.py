@@ -15,9 +15,15 @@ class RoomRequestSerializer(serializers.ModelSerializer):
     def validate(self,data):
         pre_room=data.get('pre_room')
         new_room=data.get('new_room')
+        user=get_object_or_404(User,user_id=data.get('user'))
+
+
         if pre_room and new_room:
             if pre_room==new_room:
                 raise serializers.ValidationError({'message':'기존의 방과 다른 방을 입력해주세요.'})
+            if RoomRequest.objects.filter(pre_room=pre_room, new_room=new_room,user=user).exists():
+                raise serializers.ValidationError({'message':'이미 해당 방으로의 신청이 존재합니다.'})
+
         return data
     
     def create(self, validated_data):
