@@ -31,8 +31,12 @@ class IsOkayLike(permissions.BasePermission):
             return user.status in ['사생인증','학생회','관리자']
         #다른 METHOD는 거부! 
         return False 
-'''
-
-'''
+    
+class IsUser(permissions.BasePermission):
+    def has_permission(self,request,view):
+        user=extract_user_from_jwt(request)
+        if request.method in ['GET','POST','PATCH']:
+            return user.status in ['사생인증','학생회','관리자','정지']
+        return False
 
 

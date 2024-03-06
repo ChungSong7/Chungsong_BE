@@ -1,5 +1,6 @@
 import re
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from .models import User,Notice
 from django.contrib.auth.hashers import make_password,check_password
 from django.shortcuts import get_object_or_404
@@ -48,28 +49,11 @@ class UserSerializer(serializers.ModelSerializer):
         instance = User.objects.create(**validated_data)
         instance.set_password(validated_data['password']) #비밀번호 해싱
         instance.save()
-        # 존재하지 않으면 새로운 Board 객체 생성
+        # 존재하지 않으면 새로운 학교 Board 객체 생성
         if not Board.objects.filter(board_name=instance.school).exists():
             Board.objects.create(board_name=instance.school)
         return instance
 
-'''
-class UserExistenceCheckSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    room = serializers.CharField()
-    email = serializers.EmailField()
-
-    def validate(self, data):
-        username = data.get('username')
-        room = data.get('room')
-        email = data.get('email')
-
-        # 해당하는 유저가 있는지 확인
-        user = get_object_or_404(User, username=username, room=room, email=email)
-
-        # 유저가 존재한다면 User 객체 반환
-        return user
-'''
 
 
 class UserUpdateSerializer(serializers.Serializer):
@@ -85,39 +69,40 @@ class UserUpdateSerializer(serializers.Serializer):
         username = data.get('username')
         room = data.get('room')
         email = data.get('email')
-        # 해당하는 유저가 있는지 확인
+        #해당하는 유저가 있는지 확인
         try:
-            user = get_object_or_404(User, username=username, room=room, email=email)
+            user = User.objects.get(username=username, room=room, email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError('해당하는 유저가 없습니다.')#일어날 일 X
+            #raise serializers.ValidationError({'해당하는 사용자가 없습니다.'})#일어날 일 X
+            raise serializers.ValidationError({'message':'해당하는 사용자를 찾을 수 없습니다.'})
         
         new_email = data.get('new_email')
         password = data.get('password')
         password_confirm = data.get('password_confirm')
 
         if new_email and password:
-            raise serializers.ValidationError({'value error':'email, password 하나만 입력하세요(근데 이거 일어날 일 X 예외)'})
+            raise serializers.ValidationError({'message':'email, password 하나만 입력하세요(근데 이거 일어날 일 X 예외)'})
         elif new_email and not password and not password_confirm:
             #이메일 형식 검사
             if not re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', new_email):
-                raise serializers.ValidationError({'email error':'이메일 형식이 맞지 않습니다.'})
+                raise serializers.ValidationError({'message':'이메일 형식이 맞지 않습니다.'}) #new_email 이메일 필드라서 발생 X
+            if new_email and user.email == new_email:
+                raise serializers.ValidationError({'message':'새 이메일은 현재 이메일과 다르게 입력해야 합니다.'})
             # 이메일 변경 요청일 때 유효성 검사 (필요없을 듯)
             if User.objects.filter(email=new_email).exists():
-                raise serializers.ValidationError({'email error':'입력한 이메일은 이미 사용 중입니다. 다른 이메일을 입력해주세요.'})
-            if new_email and user.email == new_email:
-                raise serializers.ValidationError({'email error':'새 이메일은 현재 이메일과 다르게 입력해야 합니다.'})
+                raise serializers.ValidationError({'message':'입력한 이메일은 이미 사용 중입니다. 다른 이메일을 입력해주세요.'})
         elif password and password_confirm and not new_email:
             # 비밀번호 변경 요청일 때 유효성 검사
             if len(password) < 10 or len(password_confirm) < 10:
-                raise serializers.ValidationError({'password error':'비밀번호는 10자 이상이어야 합니다.'})
+                raise serializers.ValidationError({'message':'비밀번호는 10자 이상이어야 합니다.'})
             if not re.match(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{10,}$', password):
-                raise serializers.ValidationError({'password error':'비밀번호는 영문, 숫자, 특수문자를 각각 한 개 이상 포함하여야 합니다.'})
+                raise serializers.ValidationError({'message':'비밀번호는 영문, 숫자, 특수문자를 각각 한 개 이상 포함하여야 합니다.'})
             if password != password_confirm:
-                raise serializers.ValidationError({'password error':'비밀번호와 비밀번호 확인이 일치하지 않습니다.'})
+                raise serializers.ValidationError({'message':'비밀번호와 비밀번호 확인이 일치하지 않습니다.'})
             if check_password(password,user.password):
-                raise serializers.ValidationError({'password error':'기존 비밀번호와 다른 비밀번호를 입력하세요.'})
+                raise serializers.ValidationError({'message':'기존 비밀번호와 다른 비밀번호를 입력하세요.'})
         else: 
-            raise serializers.ValidationError({'value error':'입력 조건이 맞지 않습니다.'})
+            raise serializers.ValidationError({'message':'입력 조건이 맞지 않습니다.'})
         return data
 
     def update(self, instance, validated_data):
@@ -215,8 +200,3 @@ class NoticeSerializer(serializers.ModelSerializer):
             return post.post_id
         else:
             return None
-        
-        #'content': comment.content,  # 댓글 내용
-            #'notice_title':post.board.board_name,
-            #'comment_id':comment.comment_id,
-            #'post_id':post.post_id,

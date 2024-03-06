@@ -20,6 +20,10 @@ from django.utils import timezone
 
 from django.db.models import Q
 
+from django.core.mail import send_mail
+from config.settings import EMAIL_HOST_USER
+
+
 
 
 class NewUserView(APIView):
@@ -48,9 +52,25 @@ class NewUserView(APIView):
     def delete(self, request, *args, **kwargs):
         new_user_id=request.data['user_id']
         new_user=get_object_or_404(User,user_id=new_user_id)
+
+        # 요청에서 이메일 주소 받기
+        email = new_user.email
+
+        # 이메일로 코드 전송
+        message=f'{new_user.username}님의 <청송> 사생인증이 거부되었습니다. 회원가입을 다시 해주세요.\n\n\n'
+        message+='카드 사진이 잘 보이는지 확인해주세요.\n'
+        message+='이름, 호실 정보가 사실과 맞는지 확인해주세요.\n\n\n'
+        message+='자세한 문의는 자율회 또는 현 메일(7th.chungsong@gmail.com)로 문의해주세요.\n'
+        send_mail(
+            '<청송> 회원가입 거부처리 안내',#제목
+            message,#본문
+            EMAIL_HOST_USER,#발신 이메일 주소
+            [email],#수신 이메일 주소
+            fail_silently=False, 
+            )
         new_user.delete()
-        
-        return Response({'message':f'{new_user.username} 님이 가입 거부 처리되었습니다.'},status=status.HTTP_204_NO_CONTENT)
+
+        return Response({'message':f'{new_user.username}님이 가입 거부 처리되었습니다.'},status=status.HTTP_200_OK)
 
 class RoomRequestView(APIView):
     serializer_class = RoomRequestSerializer
@@ -72,7 +92,7 @@ class RoomRequestView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     #호수변동 신청 list 조회
     def get(self, request):
-        queryset=RoomRequest.objects.all()
+        queryset= RoomRequest.objects.all().order_by('-created_at')
         paginator = CustomCursorPagination()
         paginated_queryset = paginator.paginate_queryset(queryset, request)
         serializer=self.serializer_class(paginated_queryset,many=True)
@@ -111,6 +131,7 @@ class FreezeView(APIView):
             end_date=user.suspension_end_date, 
             days=int(freeze_days)
         )
+        #유저에게 알림 생성
         notice_data = {
             'user': freeze.user,  # 정지 먹은 유저
             'root_id': freeze.freeze_history_id,  # 정지 기록의 고유 ID
@@ -118,12 +139,11 @@ class FreezeView(APIView):
         }
         Notice.objects.create(**notice_data)
 
-
         return Response({"message": f"{user.username}님이 {freeze_days}일간 정지되었습니다."}, status=status.HTTP_200_OK)
     
     #정지 이력 조회
     def get(self,request,user_id,*args, **kwargs):
-        user_id=self.kwargs['user_id']
+        user_id=self.kwargs['user_id'] #path patameter 
         user = get_object_or_404(User, user_id=user_id)
         queryset = FreezeHistory.objects.filter(user=user).order_by('-created_at')
         paginator = CustomCursorPagination()
@@ -147,13 +167,12 @@ class AdminDeleteView(APIView):
             #게시글의 댓글 수 재조정
             post=comment.post
             comment.delete()
-            print(post.comment_size)
+
             post.comment_size = Comment.objects.filter(post=post, display=True).count()
-            print(post.comment_size)
             post.save()
             return Response({'message':'댓글이 완전 삭제되었습니다.'})
         else:
-            return Response({'message':'유효한 post_id 또는 comment_id 를 전달하세요'})
+            return Response({'message':'유효한 post_id 또는 comment_id 를 하나만 전달하세요'})
         
     #휴지통 조회(삭제된)
     def get(self,request):
@@ -170,7 +189,7 @@ class AdminDeleteView(APIView):
 class SchoolListView(APIView):
     def get(self,request):
         return Response(SCHOOL_LIST)
-    
+
 class SchoolBoardListView(APIView):
     permission_classes=[IsAdmin]
     def get(self,request):

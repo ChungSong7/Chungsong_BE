@@ -23,6 +23,8 @@ from posts.serializers import PostSerializer
 
 from boards.permissions import IsOkayBlockedPatch
 from boards.paginations import CustomCursorPagination
+
+from .permissions import UserInfoPermit
 import random
 
 
@@ -33,7 +35,7 @@ class SignupView(APIView):
         serializer.is_valid(raise_exception=True) #유효하지 않을 경우 예외 발생
         user= serializer.save()
         #회원가입
-        return Response({'message':'signup success','status':user.status})
+        return Response({'message':'회원등록 완료','status':user.status})
 
 #로그인 API
 class LoginView(APIView):
@@ -44,10 +46,10 @@ class LoginView(APIView):
         #해당유저가 있나
         user=User.objects.filter(email=email).first()
         if user is None:
-            raise AuthenticationFailed('User not found')
+            raise AuthenticationFailed({'message':'해당 사용자를 찾을 수 없습니다.'})
         #비번은 맞나
         if not user.check_password(password):
-            raise AuthenticationFailed('Incorrect password')
+            raise AuthenticationFailed({'message':'비밀번호가 틀립니다.'})
         
         if user.status=='인증대기':
             return Response({'message':'회원님은 현재 인증대기 상태입니다.'})
@@ -63,9 +65,9 @@ class LoginView(APIView):
         }
         return response      
 
-#jwt 유저정보 조회,삭제 API
+#jwt 유저정보 조회,삭제/ 변경 API
 class UserInfoView(APIView):
-
+    permission_classes=[UserInfoPermit]
     #유저정보 조회
     def get(self,request):
         user=extract_user_from_jwt(request)
@@ -101,6 +103,7 @@ class UserInfoView(APIView):
         response.delete_cookie('refresh_token')
         return response
     
+    #이메일 또는 비번 변경
     def patch(self,request):
         serializer = UserUpdateSerializer(data=request.data)
         if serializer.is_valid():
@@ -131,7 +134,7 @@ class RefreshJWTTokenView(APIView):
             'access_token':access_token
             })
 
-#로그아웃 API
+#로그아웃 API : 프론트에서 반드시 access_token 파기해야함
 class LogoutView(APIView):
     def post(self, request):
         response=Response({'message':'logout success'})
@@ -148,28 +151,30 @@ class NickDupCheckView(APIView):
         nickname=request.GET.get('nickname', None)
         print(nickname)
         if not nickname:
-            return Response({'error': 'please input nickname'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': '별명을 입력해주세요'}, status=status.HTTP_400_BAD_REQUEST)
         if self.is_korean_only(nickname):
             try:
                 User.objects.get(nickname=nickname) #get이 객체 없으면 얘외 발생 시켜주는 애라서 ㄱㅊ
-                return Response({'message':'The nickname is already taken'})
+                return Response({'message':f'{nickname}은 이미 사용중인 닉네임입니다.'})
             except User.DoesNotExist:
-                return Response({'message':'The nickname is available for use'})
-        return Response({"message":"Nickname should be Korean without spaces"})
-
+                return Response({'message':f'{nickname} 별명 사용 가능'})
+        return Response({"message":"별명은 공백이 없는 한글로만 입력해주세요."})
+    
+#이메일 중복검사
 class EmailDupCheckView(APIView): #이메일 바꾸기 전,회원가입 시 이메일 인증 전 호출
     def get(self, request):
         email=request.GET.get('email', None)
         if not email:
-            return Response({'error':'이메일을 입력해주세요'})
+            return Response({'message':'이메일을 입력해주세요'})
         if not re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', email):
-            return Response({'error':'이메일 형식이 맞지 않습니다.'})
+            return Response({'message':'이메일 형식이 맞지 않습니다.'})
         try:
             User.objects.get(email=email) #get이 객체 없으면 얘외 발생 시켜주는 애라서 ㄱㅊ
             return Response({'message':'이미 사용 중인 이메일입니다.'})
         except User.DoesNotExist:
             return Response({'message':'사용 가능한 이메일입니다.'})
 
+#이메일 찾기(조회)
 class UserMatchingView(APIView):
     def get(self, request):
         # 이름과 호실을 받아서 이메일 반환
@@ -186,7 +191,7 @@ class UserMatchingView(APIView):
             masked_email='______' + '@' + domain
             return Response({'message':'조회 성공','masked_email': masked_email})
         except User.DoesNotExist:
-            return Response({'error': 'User not found'}, status=404)
+            return Response({'message': '입력하신 정보와 일치하는 사용자가 없습니다.'}, status=404)
     
     def post(self, request):
         # 이름, 호실, 이메일을 받아서 유저의 존재 여부 확인
@@ -195,11 +200,11 @@ class UserMatchingView(APIView):
         email = request.data.get('email')
         try:
             user = User.objects.get(username=username, room=room, email=email)
-            return Response({'message': 'User found'})
+            return Response({'message': '사용자 정보 확인'})
         except User.DoesNotExist:
-            return Response({'message': 'User not found'}, status=404)
+            return Response({'message': '입력하신 정보와 일치하는 사용자가 없습니다.'}, status=404)
 
-
+#내가 쓴 글
 class MyPostView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = PostSerializer
@@ -211,6 +216,7 @@ class MyPostView(generics.ListAPIView):
         # 현재 요청한 사용자의 게시글 중 display 속성이 True인 것들만 필터링
         return my_posts.order_by('-created_at')
 
+#내가 댓글 단 글
 class MyCommentView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = PostSerializer
@@ -223,6 +229,7 @@ class MyCommentView(generics.ListAPIView):
 
         return Post.objects.filter(post_id__in=commented_posts).order_by('-created_at')
 
+#나의 알림
 class MyNoticeView(generics.ListAPIView):
     permission_classes=[IsOkayBlockedPatch]
     serializer_class = NoticeSerializer
@@ -232,7 +239,7 @@ class MyNoticeView(generics.ListAPIView):
         user = extract_user_from_jwt(self.request)
         return Notice.objects.filter(user=user).order_by('-created_at')
     
-
+#이메일 전송
 class SendEmailCodeView(APIView):
     def post(self,request):
         # 요청에서 이메일 주소 받기
@@ -265,7 +272,7 @@ class SendEmailCodeView(APIView):
         )
         return Response({"message": "인증 번호 전송"}, status=status.HTTP_200_OK)
 
-
+#이메일 인증
 class CheckEmailCodeView(APIView):
     def delete(self,request):
         # 사용자가 전달한 email과 code 가져오기

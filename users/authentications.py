@@ -21,13 +21,13 @@ def decode_access_token(token):
         payload= jwt.decode(token,ACCESS_TOKEN_SECRET_KEY,algorithms=ALGORITHM)
         return payload['user_id']
     except:
-        raise exceptions.AuthenticationFailed('access_token unauthenticated')
+        raise exceptions.AuthenticationFailed({'message':'access_token unauthenticated'})
 
 #refresh_token 생성
 def create_refresh_token(user_id):
     payload={
         'user_id':user_id,
-        'exp':datetime.datetime.utcnow()+datetime.timedelta(days=90), #3달 refresh 토큰 유지
+        'exp':datetime.datetime.utcnow()+datetime.timedelta(days=30), #한 달 refresh 토큰 유지
         'iat':datetime.datetime.utcnow()
     }
     token=jwt.encode(payload,REFRESH_TOKEN_SECRET_KEY,algorithm=ALGORITHM)
@@ -39,7 +39,7 @@ def decode_refresh_token(token):
         payload=jwt.decode(token,REFRESH_TOKEN_SECRET_KEY,algorithms=ALGORITHM)
         return payload['user_id']
     except:
-        raise exceptions.AuthenticationFailed('refresh token unauthenticated')
+        raise exceptions.AuthenticationFailed({'message':'refresh token unauthenticated'})
     
 #request에서 jwt로 유저객체 찾아서 리턴
 def extract_user_from_jwt(request):

@@ -9,13 +9,13 @@ from posts.models import Post,Commenter,Comment,CommentLiker
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 from posts.views import is_exist
-from boards.permissions import IsOkayBlockedPatch,IsOkayLike
+from boards.permissions import IsUser
 from boards.paginations import CustomCursorPagination
 
 #GET 댓글list 조회  // POST 댓글쓰기
 class CommentView(ListAPIView,CreateAPIView):
 
-    permission_classes=[IsOkayBlockedPatch]
+    permission_classes=[IsUser]
     serializer_class = CommentSerializer
     pagination_class = CustomCursorPagination
     
@@ -25,7 +25,7 @@ class CommentView(ListAPIView,CreateAPIView):
         if response:
             return response  # 오류 응답이 반환되었을 때 바로 반환
         # 나머지 로직
-        queryset = Comment.objects.filter(post_id=post_id)
+        queryset = Comment.objects.filter(post_id=post_id).order_by('-created_at')
         paginator = CustomCursorPagination()
         paginated_queryset = paginator.paginate_queryset(queryset, request)
         serializer = self.serializer_class(paginated_queryset, many=True)
@@ -37,11 +37,15 @@ class CommentView(ListAPIView,CreateAPIView):
         response = is_exist(request)
         if response:
             return response
+        
+        user=extract_user_from_jwt(request)
+        if user.status=='정지':
+            return Response({'message':'정지 기간에는 댓글을 작성할 수 없습니다.'})
         context={'post_id': post_id,
                 'up_comment_id':request.data.get('up_comment_id'),
                 'request':request} #serializer에 넘겨줄 dic
 
-        user=extract_user_from_jwt(request)
+
         post=get_object_or_404(Post,post_id=post_id)
         anon_status=request.data.get('anon_status')
 
@@ -89,7 +93,7 @@ class CommentView(ListAPIView,CreateAPIView):
 #PATCH 댓글 삭제 // DELETE 휴지통삭제(ㄴㄴ)
 class CommentDetailView(RetrieveUpdateDestroyAPIView):
 
-    permission_class = [IsOkayBlockedPatch]
+    permission_class = [IsUser]
     serializer_class = CommentSerializer
     
     lookup_url_kwarg = 'comment_id'
@@ -119,7 +123,7 @@ class CommentDetailView(RetrieveUpdateDestroyAPIView):
 
 #PATCH 댓글 좋아요
 class CommentLikeView(UpdateAPIView):
-    permission_classes=[IsOkayLike]
+    permission_classes=[IsUser]
     serializer_class=CommentSerializer
 
     lookup_url_kwarg = 'comment_id' #url에서
@@ -129,8 +133,11 @@ class CommentLikeView(UpdateAPIView):
         response = is_exist(request)
         if response:
             return response
-        comment=get_object_or_404(Comment,comment_id=comment_id)
         user=extract_user_from_jwt(request)
+        if user.status =='정지':
+            return Response({'message':'정지 기간에는 댓글을 좋아할 수 없습니다.'})
+
+        comment=get_object_or_404(Comment,comment_id=comment_id)
 
         if comment.writer == user:
             return Response({'message':'자신의 댓글은 좋아할 수 없습니다.'},status=status.HTTP_200_OK)

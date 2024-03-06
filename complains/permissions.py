@@ -16,8 +16,8 @@ class IsOkayComplain(permissions.BasePermission):
         #GET 관리자만 신고조회
         if request.method == 'GET':
             return user.status == '관리자'
-        #POST 작성은 정지 회원 빼고 가능
+        #POST 작성은 정지 회원 빼고 가능 : 정지 거부 message 응답 주기
         elif request.method=='POST':
-            return user.status in ['사생인증','학생회','관리자']
+            return user.status in ['사생인증','학생회','관리자','정지']
         #다른 HTTO 메서드는 거부! 
         return False 

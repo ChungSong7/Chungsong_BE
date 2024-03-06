@@ -9,7 +9,7 @@ from users.models import Notice
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
-from boards.permissions import IsOkayBlockedPatch,IsOkayLike
+from boards.permissions import IsUser
 
 # post display 삭제 검사 함수
 def is_exist(request):
@@ -37,16 +37,17 @@ def is_exist(request):
 
 #POST 게시글 작성
 class PostCreateView(CreateAPIView):
-    permission_classes = [IsOkayBlockedPatch]
+    permission_classes = [IsUser]
     serializer_class = PostSerializer
     def post(self, request, board_id, *args, **kwargs):
         # 게시판 객체 가져오기
-        print(request.data)
         board = get_object_or_404(Board, board_id=board_id)
         user = extract_user_from_jwt(request)
         if board.board_name=='공지사항':
             if user.status not in ['학생회','관리자']:
-                return Response({"error": "공지사항에는 학생회만 글을 쓸 수 있습니다."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': '공지사항에는 학생회만 글을 쓸 수 있습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        if user.status =='정지':
+            return Response({'message':'정지 기간에는 게시글을 작성할 수 없습니다.'})
         # 시리얼라이저에 context 전달
         serializer = self.get_serializer(data=request.data, context={'board_id': board_id, 'request': request})
         serializer.is_valid(raise_exception=True)
@@ -55,7 +56,7 @@ class PostCreateView(CreateAPIView):
 
 #GET 게시글 단일 조회 // PATCH 게시글 삭제 //DELETE 휴지통삭제 (ㄴㄴ)
 class PostView(RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsOkayBlockedPatch]
+    permission_classes = [IsUser]
     serializer_class = PostSerializer
     
     lookup_url_kwarg = 'post_id' #url에서
@@ -91,20 +92,22 @@ class PostView(RetrieveUpdateDestroyAPIView):
 
 #PATCH 게시글 좋아요
 class PostLikeView(UpdateAPIView):
-    permission_classes=[IsOkayLike]
+    permission_classes=[IsUser]
     serializer_class=PostSerializer
 
     lookup_url_kwarg = 'post_id' #url에서
     lookup_field = 'post_id' #model에서
 
     def patch(self,request,post_id, *args, **kwargs):
+        
         reponse=is_exist(request)
         if reponse:
             return reponse
         
         post=get_object_or_404(Post,post_id=post_id)
         user=extract_user_from_jwt(request)
-        
+        if user.status=='정지':
+            return Response({'message':'정지 기간에는 게시글을 좋아할 수 없습니다.'})
         if post.author == user:
             return Response({'message':'자신의 글은 좋아할 수 없습니다.'},status=status.HTTP_200_OK)
         try:
