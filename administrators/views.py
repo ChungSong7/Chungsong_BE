@@ -199,3 +199,10 @@ class SchoolBoardListView(APIView):
         queryset = Board.objects.filter(board_id__gte=10).order_by('board_name')
         serializer=BoardSerializer(queryset,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
+    
+class UseridInfoView(APIView):
+    permission_classes=[IsAdmin]
+    def get(self,request):
+        user=get_object_or_404(User,user_id=request.data['user_id'])
+        serializer=UserSerializer(user)
+        return Response(serializer.data)

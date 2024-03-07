@@ -19,11 +19,13 @@ class ComplainSerializer(serializers.ModelSerializer):
     comp_user_id=serializers.UUIDField(required=False)
     comped_user_id=serializers.UUIDField(required=False)
 
+    comped_user_name=serializers.SerializerMethodField(required=False)
+    
     tag=serializers.SerializerMethodField(required=False)
 
     class Meta:
         model=Complain
-        fields=['complain_id','comp_user_id','comped_user_id','created_at','status',
+        fields=['complain_id','comp_user_id','comped_user_id','comped_user_name','created_at','status',
                 'category','comp_post_id','comp_comment_id','tag']
         
     def get_tag(self,obj):
@@ -33,6 +35,20 @@ class ComplainSerializer(serializers.ModelSerializer):
         elif obj.comp_post_id:
             post = Post.objects.get(post_id=obj.comp_post_id)
             return f"{post.board.board_name} 게시글"
+        
+    def get_comped_user_name(self,obj):
+        if obj.comp_comment_id:
+            comment = Comment.objects.get(comment_id=obj.comp_comment_id)
+            if comment.writer==None or comment.writer.status=='탈퇴회원':
+                return '탈퇴회원'
+            return comment.commenter
+        elif obj.comp_post_id:
+            post = Post.objects.get(post_id=obj.comp_post_id)
+            if post.author==None or post.author.status=='탈퇴회원':
+                return '탈퇴회원'
+            return post.author.nickname if not post.anon_status else "익명"
+        
+
 
     def validate(self, data):  #게시글, 댓글 중 1 신고 맞지? 확인
         comp_post_id = data.get('comp_post_id')
