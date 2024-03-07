@@ -4,7 +4,7 @@ from rest_framework.response import Response
 
 from rest_framework.exceptions import NotFound
 
-
+from django.http import JsonResponse
 
 from .models import Board
 from .serializers import BoardSerializer
@@ -64,9 +64,12 @@ class HotPostView(generics.ListAPIView):
         previous_date = timezone.now() - timezone.timedelta(days=7)
 
         # 좋아요 수가 10개 이상이고, 작성일자가 previous_date 이후인 게시글 필터링
-        queryset = Post.objects.filter(like_size__gte=3, created_at__gte=previous_date)
+        queryset = Post.objects.filter(like_size__gte=10, created_at__gte=previous_date, board__board_id__range=(1, 9))
 
         # 시간순으로 정렬
         queryset = queryset.order_by('-created_at')
 
         return queryset
+    
+def health_check(request):
+    return JsonResponse({'status': 'ok'})
