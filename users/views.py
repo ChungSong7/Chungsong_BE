@@ -155,7 +155,7 @@ class NickDupCheckView(APIView):
         if self.is_korean_only(nickname):
             try:
                 User.objects.get(nickname=nickname) #get이 객체 없으면 얘외 발생 시켜주는 애라서 ㄱㅊ
-                return Response({'message':f'{nickname}은 이미 사용중인 닉네임입니다.'})
+                return Response({'message':f'{nickname} 은(는) 이미 사용중인 닉네임입니다.'})
             except User.DoesNotExist:
                 return Response({'message':f'{nickname} 별명 사용 가능'})
         return Response({"message":"별명은 공백이 없는 한글로만 입력해주세요."})
@@ -248,7 +248,7 @@ class SendEmailCodeView(APIView):
             email_validator = EmailValidator()
             email_validator(email) 
         except ValidationError:
-            return Response({'message':'올바른 이메일 형식이 아닙니다.'})
+            return Response({'message':'이메일 형식이 맞지 않습니다.'})
         
         #6자리 랜덤 코드 생성
         code = ''.join(random.choices('0123456789', k=6))
