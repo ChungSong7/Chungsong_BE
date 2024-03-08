@@ -72,4 +72,4 @@ class HotPostView(generics.ListAPIView):
         return queryset
     
 def health_check(request):
-    return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'ok'},status=status.HTTP_200_OK)
