@@ -22,11 +22,10 @@ class ComplainSerializer(serializers.ModelSerializer):
     comped_user_name=serializers.SerializerMethodField(required=False)
     
     tag=serializers.SerializerMethodField(required=False)
-
     class Meta:
         model=Complain
-        fields=['complain_id','comp_user_id','comped_user_id','created_at','status',
-                'category','comp_post_id','comp_comment_id','tag','comped_user_name']
+        fields=['complain_id','comp_user_id','comped_user_id','comped_user_name','created_at','status',
+                'category','comp_post_id','comp_comment_id','tag',]
         
     def get_tag(self,obj):
         if obj.comp_comment_id:
