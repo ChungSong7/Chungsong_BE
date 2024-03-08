@@ -26,7 +26,7 @@ class ComplainSerializer(serializers.ModelSerializer):
     class Meta:
         model=Complain
         fields=['complain_id','comp_user_id','comped_user_id','created_at','status',
-                'category','comp_post_id','comp_comment_id','tag','comed_user_name']
+                'category','comp_post_id','comp_comment_id','tag','comped_user_name']
         
     def get_tag(self,obj):
         if obj.comp_comment_id:
