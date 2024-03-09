@@ -127,11 +127,12 @@ class NoticeSerializer(serializers.ModelSerializer):
 
     comment_id = serializers.SerializerMethodField(required=False,allow_null=True)
     post_id = serializers.SerializerMethodField(required=False,allow_null=True)
+    board_id=serializers.SerializerMethodField(required=False,allow_null=True)
 
     class Meta:
         model=Notice
         fields=['notice_id','user','category','created_at','checked', #'root_id'
-                'message','content','notice_title','post_id','comment_id']
+                'message','content','notice_title','post_id','comment_id','board_id']
         
     def get_message(self, instance):
         if instance.category == '댓글':
@@ -198,5 +199,20 @@ class NoticeSerializer(serializers.ModelSerializer):
         elif instance.category=='웅성웅성':
             post=get_object_or_404(Post,post_id=instance.root_id)
             return post.post_id
+        else:
+            return None
+        
+    def get_board_id(self,instance):
+        if instance.category=='댓글':
+            comment=get_object_or_404(Comment,comment_id=instance.root_id)
+            return comment.post.board.board_id
+        elif instance.category=='대댓글':
+            comment=get_object_or_404(Comment,comment_id=instance.root_id)
+            return comment.post.board.board_id
+        elif instance.category == '정지':
+            return None
+        elif instance.category=='웅성웅성':
+            post=get_object_or_404(Post,post_id=instance.root_id)
+            return post.board.board_id
         else:
             return None
