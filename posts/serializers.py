@@ -20,6 +20,7 @@ class PostSerializer(serializers.ModelSerializer):
     author_name=serializers.SerializerMethodField(required=False)
     anon_status = serializers.BooleanField(required=True)
     board= serializers.CharField(source='board.board_name',required=False) #아니면 board_id로 줘야함
+    board_id=serializers.UUIDField(source='board.board_id',required=False)
     
     def get_images(self, obj):
         return ImageSerializer(instance=obj.images.all(), many=True, context=self.context).data
@@ -46,7 +47,7 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         
         fields = ['post_id','title', 'content', 'like_size', 'comment_size', 'created_at', 
-                'board','author_profile','author_name','anon_status','images']
+                'board','board_id','author_profile','author_name','anon_status','images']
     
     def create(self, validated_data):
 
