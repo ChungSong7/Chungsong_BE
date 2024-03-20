@@ -27,6 +27,7 @@ urlpatterns = [
     path('boards/',include('boards.urls')),
     #path('comments/',include('comments.urls')),
     path('complains/',include('complains.urls')),
+    path('haksuk/',include('haksuk.urls')),
 ]
 #이미지 경로 추가
 #/media/이미지이름.png 이렇게 저장됨
