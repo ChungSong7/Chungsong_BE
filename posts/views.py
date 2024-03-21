@@ -72,7 +72,6 @@ class PostView(RetrieveUpdateDestroyAPIView):
         if reponse:
             return reponse
         post = get_object_or_404(Post, post_id=post_id)
-        print(22)
         serializer = self.get_serializer(post)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
