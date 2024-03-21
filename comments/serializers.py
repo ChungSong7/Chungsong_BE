@@ -10,11 +10,11 @@ class CommentSerializer(serializers.ModelSerializer):
     commenter_profile=serializers.IntegerField(required=False) 
     post= serializers.UUIDField(required=False)
     commenter= serializers.CharField(required=False)
-    writer=serializers.UUIDField(required=False)
+    writer_id=serializers.UUIDField(source='writer.user_id',required=False)
 
     class Meta:
         model = Comment
-        fields = ['comment_id', 'post','up_comment_id', 'content', 'created_at', 'anon_status','writer',
+        fields = ['comment_id', 'post','up_comment_id', 'content', 'created_at', 'anon_status','writer_id',
                 'commenter', 'like_size', 'warn_size','display','commenter_profile']
         #'anon_status', 'anon_num',
 
