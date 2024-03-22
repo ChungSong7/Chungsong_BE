@@ -16,9 +16,9 @@ class MenuView(APIView):
         for meal_row in meal_wrap.find_all('li', class_='flex-tb'):
             date = meal_row.find('div', class_='date').text.strip()
             day = meal_row.find('div', class_='day').text.strip()
-            breakfast = meal_row.find('div', class_='breakfast').find('span', class_='flex-inner').text.strip()
-            lunch = meal_row.find('div', class_='lunch').find('span', class_='flex-inner').text.strip()
-            dinner = meal_row.find('div', class_='dinner').find('span', class_='flex-inner').text.strip()
+            breakfast = meal_row.find('div', class_='breakfast').find('span', class_='flex-inner').text.strip().split('\r\n')
+            lunch = meal_row.find('div', class_='lunch').find('span', class_='flex-inner').text.strip().split('\r\n')
+            dinner = meal_row.find('div', class_='dinner').find('span', class_='flex-inner').text.strip().split('\r\n')
             
             menu_list.append({
                 'date': date,
@@ -27,6 +27,5 @@ class MenuView(APIView):
                 'lunch': lunch,
                 'dinner': dinner
             })
-            print(menu_list)
         
         return Response(menu_list)
