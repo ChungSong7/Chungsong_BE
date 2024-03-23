@@ -29,7 +29,7 @@ class ComplainView(APIView):
         user=extract_user_from_jwt(request)
         if user.status=='정지':
             return Response({'message':'정지 기간에는 신고할 수 없습니다.'})
-        
+        print(request.data)
         serializer = ComplainSerializer(data=request.data,context={'request':request})
         if serializer.is_valid(raise_exception=True):
             serializer.save()
