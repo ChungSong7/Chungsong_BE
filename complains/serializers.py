@@ -3,6 +3,7 @@ from .models import Complain
 from django.shortcuts import get_object_or_404
 
 from posts.models import Post,Comment
+from boards.models import Board
 
 from users.serializers import UserSerializer
 from posts.serializers import PostSerializer
@@ -13,6 +14,8 @@ from django.core.exceptions import ObjectDoesNotExist
 
 
 class ComplainSerializer(serializers.ModelSerializer):
+    board_id=serializers.SerializerMethodField(required=False)
+
     comp_post_id = serializers.UUIDField(required=False)
     comp_comment_id = serializers.UUIDField(required=False)
 
@@ -24,8 +27,13 @@ class ComplainSerializer(serializers.ModelSerializer):
     tag=serializers.SerializerMethodField(required=False)
     class Meta:
         model=Complain
-        fields=['complain_id','comp_user_id','comped_user_id','comped_user_name','created_at','status',
+        fields=['board_id','complain_id','comp_user_id','comped_user_id','comped_user_name','created_at','status',
                 'category','comp_post_id','comp_comment_id','tag',]
+        
+    def get_board_id(self,obj):
+        comped_post=Post.objects.get(post_id=obj.comp_post_id)
+        board=comped_post.board
+        return board.board_id
         
     def get_tag(self,obj):
         if obj.comp_comment_id:
