@@ -5,7 +5,6 @@ import requests
 
 class MenuView(APIView):
     def get(self, request, format=None):
-        print(11)
         url = 'https://www.ndhs.or.kr/site/main/schedule/calendar/week_menu_EP'  # 해당 사이트의 URL을 입력합니다
         response = requests.get(url)
         html = response.text
@@ -27,5 +26,16 @@ class MenuView(APIView):
                 'lunch': lunch,
                 'dinner': dinner
             })
+            print(menu_list)
+
+            menu_dict = {}
+            for menu_item in menu_list:
+                date = menu_item['date']
+                menu_dict[date] = {
+                'day': menu_item['day'],
+                'breakfast': menu_item['breakfast'],
+                'lunch': menu_item['lunch'],
+                'dinner': menu_item['dinner']
+    }
         
-        return Response(menu_list)
+        return Response(menu_dict)
