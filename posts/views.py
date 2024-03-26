@@ -68,9 +68,13 @@ class PostView(RetrieveUpdateDestroyAPIView):
 
     #게시글 단일 조회
     def get(self, request, post_id, *args, **kwargs):
-        reponse=is_exist(request)
-        if reponse:
-            return reponse
+        user=extract_user_from_jwt(request)
+        if user.status == '관리자':
+            pass
+        else: #일반 사용자 filter 거름
+            reponse=is_exist(request)
+            if reponse:
+                return reponse
         post = get_object_or_404(Post, post_id=post_id)
         serializer = self.get_serializer(post)
         return Response(serializer.data, status=status.HTTP_200_OK)
