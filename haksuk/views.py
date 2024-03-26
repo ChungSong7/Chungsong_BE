@@ -26,7 +26,7 @@ class MenuView(APIView):
                 'lunch': lunch,
                 'dinner': dinner
             })
-            print(menu_list)
+            
 
             menu_dict = {}
             for menu_item in menu_list:
