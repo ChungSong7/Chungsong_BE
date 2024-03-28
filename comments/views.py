@@ -2,7 +2,7 @@ from rest_framework.generics import CreateAPIView,RetrieveUpdateDestroyAPIView,U
 from rest_framework import status
 from rest_framework.views import APIView
 #from rest_framework.permissions import IsAuthenticated
-from .serializers import CommentSerializer
+from .serializers import CommentSerializer,get_comments_with_replies
 from users.authentications import extract_user_from_jwt
 from django.shortcuts import get_object_or_404
 from posts.models import Post,Commenter,Comment,CommentLiker
@@ -10,7 +10,15 @@ from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 from posts.views import is_exist
 from boards.permissions import IsUser
-from boards.paginations import CustomCursorPagination
+from boards.paginations import CustomCursorPagination,CommentCursorPagination
+
+from django.db.models import Q
+#list -> qeuryset (Comment)
+def list_to_queryset(comments_data):
+    comment_ids = [comment['comment_id'] for comment in comments_data]
+    comments_query = Comment.objects.filter(comment_id__in=comment_ids)
+    return comments_query
+
 
 #GET 댓글list 조회  // POST 댓글쓰기
 class CommentView(ListAPIView,CreateAPIView):
@@ -21,15 +29,57 @@ class CommentView(ListAPIView,CreateAPIView):
     
     #GET 게시글 별 댓글list 조회
     def get(self, request, post_id, *args, **kwargs):
-        response = is_exist(request)
-        if response:
-            return response  # 오류 응답이 반환되었을 때 바로 반환
+
+        user=extract_user_from_jwt(request)
+        if user.status == '관리자':
+            pass
+        else: #일반 사용자 filter 거름
+            reponse=is_exist(request)
+            if reponse:
+                return reponse # 오류 응답이 반환되었을 때 바로 반환
+            
         # 나머지 로직
-        queryset = Comment.objects.filter(post_id=post_id).order_by('-created_at')
+        #댓글만 먼저 추출
+        '''
+        queryset = Comment.objects.filter(post_id=post_id,up_comment_id__isnull=True).order_by('-created_at')
         paginator = CustomCursorPagination()
         paginated_queryset = paginator.paginate_queryset(queryset, request)
-        serializer = self.serializer_class(paginated_queryset, many=True)
+
+        comments = paginated_queryset.values(
+            'comment_id', 
+            'post',
+            'content', 
+            'created_at', 
+            'anon_status', 
+            'writer',  # writer__username외래 키 필드에 대한 사용자명 가져오기
+            'commenter',  #commenter__nickname 외래 키 필드에 대한 닉네임 가져오기
+            'like_size', 
+            'warn_size', 
+            'display'
+        )
+        response_data = []
+        for comment in comments:
+            comment_id = comment['comment_id']
+            comment['replies'] = self.get_replies(comment_id)
+            response_data.append(comment)
+
+        serializer = self.serializer_class(response_data, many=True)
         return paginator.get_paginated_response(serializer.data)
+        
+        '''
+
+        comments_data = get_comments_with_replies(post_id) #comments_data 는 list임
+        return Response(comments_data)
+        #queryset = list_to_queryset(comments_data)
+        
+
+        '''
+        paginator = CommentCursorPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        serializer = CommentSerializer(paginated_queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
+        '''
+        
 
 
     #POST 댓글 작성
