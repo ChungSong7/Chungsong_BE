@@ -206,3 +206,10 @@ class UseridInfoView(APIView):
         user=get_object_or_404(User,user_id=request.data['user_id'])
         serializer=UserSerializer(user)
         return Response(serializer.data)
+    
+class UseridInfoView2(APIView):
+    permission_classes=[IsAdmin]
+    def get(self,request,user_id,*args, **kwargs):
+        user=get_object_or_404(User,user_id=user_id)
+        serializer=UserSerializer(user)
+        return Response(serializer.data)
