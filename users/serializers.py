@@ -14,6 +14,8 @@ from posts.models import Comment,Post
 
 class UserSerializer(serializers.ModelSerializer):
     password_confirm=serializers.CharField(write_only=True)
+    room_card = serializers.ImageField(required=True)
+
     class Meta:
         model=User
         fields=['user_id','username','nickname','email','room','room_card','school',

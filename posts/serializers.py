@@ -47,8 +47,8 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         
-        fields = ['post_id','author_id','title', 'content', 'like_size', 'comment_size', 'created_at', 
-                'board','board_id','author_profile','author_name','anon_status','images']
+        fields = ['post_id','display','author_id','title', 'content', 'like_size', 'comment_size', 'created_at', 
+                'board','board_id','author_profile','author_name','anon_status','images',]
     
     def create(self, validated_data):
 
