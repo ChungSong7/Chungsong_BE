@@ -15,10 +15,17 @@ from posts.models import Comment,Post
 class UserSerializer(serializers.ModelSerializer):
     password_confirm=serializers.CharField(write_only=True)
     room_card = serializers.ImageField(required=True)
+    school_board_id=serializers.SerializerMethodField(required=False)
+    def get_school_board_id(self, obj):
+        try:
+            board=get_object_or_404(Board,board_name=obj.school)
+        except Board.DoesNotExist:
+            raise serializers.ValidationError("해당하는 board를 찾을 수 없습니다.")
+        return board.board_id
 
     class Meta:
         model=User
-        fields=['user_id','username','nickname','email','room','room_card','school',
+        fields=['user_id','username','nickname','email','room','room_card','school','school_board_id',
                 'password','password_confirm','status','complained','profile_image']
         extra_kwargs={
             'password':{'write_only':True}, #비번 필드는 읽기 전용
