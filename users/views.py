@@ -92,9 +92,10 @@ class UserInfoView(APIView):
             school = user.school
         )
         #계정 별명, 이메일, 호실 필드 비우기, 권한 바꾸기,
-        user.nickname = ''
-        user.email = ''
-        user.room = 0
+        del_num=DeletedUser.objects.count()
+        user.nickname = f'delete{del_num}'
+        user.email = f'delete{del_num}@deleted.com'
+        user.room = user.room
         user.status = '탈퇴회원'
         user.save()
 

@@ -48,6 +48,7 @@ class DeletedUser(models.Model):
     email=models.EmailField(verbose_name='이메일',max_length=255)
     room=models.PositiveSmallIntegerField(verbose_name='호실수')
     school=models.CharField(verbose_name='학교',max_length=255)
+    created_at=models.DateTimeField(verbose_name='탈퇴 날짜',default=timezone.now)
     #deleted_date=models.DateTimeField(verbose_name='탈퇴날짜',auto_now_add=True)##이거 추가해서 다시 마이그레이션해보자. 디비 싹 갈고^^
 
 class EmailVarify(models.Model):
