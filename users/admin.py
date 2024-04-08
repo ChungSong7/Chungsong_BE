@@ -11,7 +11,7 @@ admin.site.register(User, CustomUserAdmin)
 
 @admin.register(DeletedUser)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ['deleted_user_id','name','email','room','school']
+    list_display = ['deleted_user_id','name','email','room','school','created_at']
 
 @admin.register(EmailVarify)
 class EmailVarifyAdmin(admin.ModelAdmin):
