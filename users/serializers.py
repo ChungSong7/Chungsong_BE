@@ -158,70 +158,126 @@ class NoticeSerializer(serializers.ModelSerializer):
     
     def get_content(self,instance):
         if instance.category=='댓글':
-            comment=get_object_or_404(Comment,comment_id=instance.root_id)
-            return comment.content
+            try:
+                comment=Comment.objects.get(comment_id=instance.root_id)
+                return comment.content
+            except Comment.DoesNotExist:
+                # 해당하는 Comment 객체를 찾지 못한 경우의 처리
+                return None
         elif instance.category=='대댓글':
-            comment=get_object_or_404(Comment,comment_id=instance.root_id)
-            return comment.content
+            try:
+                comment=Comment.objects.get(comment_id=instance.root_id)
+                #get_object_or_404(Comment,comment_id=instance.root_id)
+                return comment.content
+            except Comment.DoesNotExist:
+                return None
         elif instance.category == '정지':
             return None
         elif instance.category=='웅성웅성':
-            post=get_object_or_404(Post,post_id=instance.root_id)
-            return post.title
+            try:
+                post=Post.objects.get(post_id=instance.root_id)
+                #get_object_or_404(Post,post_id=instance.root_id)
+                return post.title
+            except Post.DoesNotExist:
+                return None
         else:
             return None
     
     def get_notice_title(self,instance):
         if instance.category=='댓글':
-            comment=get_object_or_404(Comment,comment_id=instance.root_id)
-            return comment.post.board.board_name
+            try:
+                comment=Comment.objects.get(comment_id=instance.root_id)
+                #get_object_or_404(Comment,comment_id=instance.root_id)
+                return comment.post.board.board_name
+            except Comment.DoesNotExist:
+                return None
         if instance.category=='대댓글':
-            comment=get_object_or_404(Comment,comment_id=instance.root_id)
-            return comment.post.board.board_name
+            try:
+                comment=Comment.objects.get(comment_id=instance.root_id)
+                #get_object_or_404(Comment,comment_id=instance.root_id)
+                return comment.post.board.board_name
+            except Comment.DoesNotExist:
+                return None
         elif instance.category == '정지':
             return '정지 처분'
         elif instance.category=='웅성웅성':
-            post=get_object_or_404(Post,post_id=instance.root_id)
-            return post.board.board_name
+            try:
+                post=Post.objects.get(post_id=instance.root_id)
+                #get_object_or_404(Post,post_id=instance.root_id)
+                return post.board.board_name
+            except Post.DoesNotExist:
+                return None
         else:
             return None
     def get_comment_id(self,instance):
         if instance.category=='댓글':
-            comment=get_object_or_404(Comment,comment_id=instance.root_id)
-            return comment.comment_id
+            try:
+                comment=Comment.objects.get(comment_id=instance.root_id)
+                #get_object_or_404(Comment,comment_id=instance.root_id)
+                return comment.comment_id
+            except Comment.DoesNotExist:
+                return None
         elif instance.category=='대댓글':
-            comment=get_object_or_404(Comment,comment_id=instance.root_id)
-            return comment.comment_id
+            try:
+                comment=Comment.objects.get(comment_id=instance.root_id)
+                #get_object_or_404(Comment,comment_id=instance.root_id)
+                return comment.comment_id
+            except Comment.DoesNotExist:
+                return None
         elif instance.category == '정지':
             return None
         else:
             return None
     def get_post_id(self,instance):
         if instance.category=='댓글':
-            comment=get_object_or_404(Comment,comment_id=instance.root_id)
-            return comment.post.post_id
+            try:
+                comment=Comment.objects.get(comment_id=instance.root_id)
+                #get_object_or_404(Comment,comment_id=instance.root_id)
+                return comment.post.post_id
+            except Comment.DoesNotExist:
+                return None
         elif instance.category=='대댓글':
-            comment=get_object_or_404(Comment,comment_id=instance.root_id)
-            return comment.comment_id
+            try:
+                comment=Comment.objects.get(comment_id=instance.root_id)
+                #get_object_or_404(Comment,comment_id=instance.root_id)
+                return comment.comment_id
+            except Comment.DoesNotExist:
+                return None
         elif instance.category == '정지':
             return None
         elif instance.category=='웅성웅성':
-            post=get_object_or_404(Post,post_id=instance.root_id)
-            return post.post_id
+            try:
+                post=Post.objects.get(post_id=instance.root_id)
+                #get_object_or_404(Post,post_id=instance.root_id)
+                return post.post_id
+            except Post.DoesNotExist:
+                return None
         else:
             return None
         
     def get_board_id(self,instance):
         if instance.category=='댓글':
-            comment=get_object_or_404(Comment,comment_id=instance.root_id)
-            return comment.post.board.board_id
+            try:
+                comment=Comment.objects.get(comment_id=instance.root_id)
+                #get_object_or_404(Comment,comment_id=instance.root_id)
+                return comment.post.board.board_id
+            except Comment.DoesNotExist:
+                return None
         elif instance.category=='대댓글':
-            comment=get_object_or_404(Comment,comment_id=instance.root_id)
-            return comment.post.board.board_id
+            try:
+                comment=Comment.objects.get(comment_id=instance.root_id)
+                #get_object_or_404(Comment,comment_id=instance.root_id)
+                return comment.post.board.board_id
+            except Comment.DoesNotExist:
+                return None
         elif instance.category == '정지':
             return None
         elif instance.category=='웅성웅성':
-            post=get_object_or_404(Post,post_id=instance.root_id)
-            return post.board.board_id
+            try:
+                post=Post.objects.get(post_id=instance.root_id)
+                #get_object_or_404(Post,post_id=instance.root_id)
+                return post.board.board_id
+            except Post.DoesNotExist:
+                return None
         else:
             return None
