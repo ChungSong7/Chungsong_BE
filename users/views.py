@@ -88,7 +88,7 @@ class UserInfoView(APIView):
         DeletedUser.objects.create(
             name = user.username,
             email = user.email,
-            room = user.room,
+            room = user.room + 10000,
             school = user.school
         )
         #계정 별명, 이메일, 호실 필드 비우기, 권한 바꾸기,
