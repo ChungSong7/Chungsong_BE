@@ -35,8 +35,11 @@ class ComplainSerializer(serializers.ModelSerializer):
                 'category','board_id','post_id','comment_id','tag','comp_post_id','comp_comment_id']
         
     def get_board_id(self,obj):
-        board=obj.comp_post.board
-        return board.board_id
+        #board=obj.comp_post.board
+        comp_post = obj.comp_post
+        if comp_post is None:
+            return None
+        return comp_post.board_id
         
     def get_tag(self,obj):
         if obj.comp_comment:
@@ -61,8 +64,11 @@ class ComplainSerializer(serializers.ModelSerializer):
 
 
     def get_post_id(self,obj):
-        post = Post.objects.get(post_id=obj.comp_post.post_id)
-        return post.post_id
+        #post = Post.objects.get(post_id=obj.comp_post.post_id)
+        comp_post=obj.comp_post
+        if comp_post is None:
+            return None
+        return comp_post.post_id
     
     def get_comment_id(self,obj):
         if obj.comp_comment:

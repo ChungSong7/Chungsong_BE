@@ -8,8 +8,8 @@ from django.utils import timezone
 
 class Complain(models.Model):
     complain_id = models.UUIDField(verbose_name='신고ID', primary_key=True, default=uuid.uuid4, unique=True, editable=False)
-    comp_post = models.ForeignKey(Post, verbose_name='신고 게시글',blank= True, null = True, on_delete=models.SET_NULL)
-    comp_comment = models.ForeignKey(Comment, verbose_name='신고 댓글',blank= True, null = True, on_delete=models.SET_NULL)
+    comp_post = models.ForeignKey(Post, verbose_name='신고 게시글',blank= True, null = True,  on_delete=models.SET_NULL)
+    comp_comment = models.ForeignKey(Comment, verbose_name='신고 댓글',blank= True, null = True,  on_delete=models.SET_NULL)
     comp_user = models.ForeignKey(User,verbose_name='신고자', on_delete=models.CASCADE)
     comped_user = models.ForeignKey(User,verbose_name='피신고자', on_delete=models.CASCADE, related_name='complains')
     created_at = models.DateTimeField(verbose_name='신고날짜',default=timezone.now)
