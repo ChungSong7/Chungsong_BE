@@ -42,9 +42,10 @@ class LoginView(APIView):
     def post(self,request):
         email=request.data['email']
         password=request.data['password']
-
+        print('여기까지ok')
         #해당유저가 있나
         user=User.objects.filter(email=email).first()
+        print('2 ok')
         if user is None:
             raise AuthenticationFailed({'message':'해당 사용자를 찾을 수 없습니다.'})
         #비번은 맞나
@@ -55,10 +56,14 @@ class LoginView(APIView):
             return Response({'message':'회원님은 현재 인증대기 상태입니다.'})
 
         access_token=create_access_token(str(user.user_id)) #얘는 시리얼라이저 데이터로
+        print("3 ok")
         refresh_token=create_refresh_token(str(user.user_id)) #얘는 쿠키로!
+        print("4 ok")
 
         response=Response()
+        print("5 ok")
         response.set_cookie(key='refresh_token',value=refresh_token,httponly=True)
+        print('6 ok')
         response.data={
             'message':'login success',
             'access_token':access_token
