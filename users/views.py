@@ -54,7 +54,7 @@ class LoginView(APIView):
         
         if user.status=='인증대기':
             return Response({'message':'회원님은 현재 인증대기 상태입니다.'})
-
+        print("2.5 ok")
         access_token=create_access_token(str(user.user_id)) #얘는 시리얼라이저 데이터로
         print("3 ok")
         refresh_token=create_refresh_token(str(user.user_id)) #얘는 쿠키로!
