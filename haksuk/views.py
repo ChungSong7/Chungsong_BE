@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime, timedelta
+from users.models import User
 
 class MenuView(APIView):
     def get(self, request, format=None):
@@ -60,3 +61,12 @@ class MenuView(APIView):
             if start_date_str <= date_str <= end_date_str:
                 selected_menu[date_str] = menu_dict[date_str]
         return Response(selected_menu)
+
+class TestView(APIView):
+    def get(self, request):
+        user=User.objects.get(email='admin2@gmail.com')
+        return Response({'DB 서버 통신 완료 : ':user.email})
+    
+    def post(self, request):
+        user=User.objects.get(email='admin2@gmail.com')
+        return Response({'DB 서버 통신 완료 : ':user.email})
