@@ -68,5 +68,9 @@ class TestView(APIView):
         return Response({'DB 서버 통신 완료 : ':user.email})
     
     def post(self, request):
+        data1=request.data['data1']
+        data2=request.data['data2']
         user=User.objects.get(email='admin2@gmail.com')
-        return Response({'DB 서버 통신 완료 : ':user.email})
+        return Response({'DB 서버 통신 완료 : ':'',
+                        'data1':data1,
+                        'data2':data2})
