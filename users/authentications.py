@@ -1,5 +1,6 @@
 from my_settings import ACCESS_TOKEN_SECRET_KEY,REFRESH_TOKEN_SECRET_KEY, ALGORITHM
-import jwt, datetime
+import jwt
+from datetime import datetime, timedelta, timezone
 from rest_framework import exceptions
 from rest_framework.authentication import get_authorization_header
 from .models import User
@@ -8,12 +9,25 @@ from django.shortcuts import get_object_or_404
 #access_token 생성
 def create_access_token(user_id):
     payload={
+        'user_id': user_id,
+        'exp': datetime.now(timezone.utc) + timedelta(minutes=180), # 3시간 access 토큰 유지
+        'iat': datetime.now(timezone.utc)
+    }
+    token = jwt.encode(payload, ACCESS_TOKEN_SECRET_KEY, algorithm=ALGORITHM)
+    return token
+
+'''
+#access_token 생성
+def create_access_token(user_id):
+    payload={
         'user_id':user_id,
         'exp':datetime.datetime.utcnow()+datetime.timedelta(minutes=180), #3시간 access 토큰 유지
         'iat':datetime.datetime.utcnow()
     }
+    #datetime.datetime.utcnow()->datetime.datetime.now(timezone.utc) python version
     token=jwt.encode(payload,ACCESS_TOKEN_SECRET_KEY,algorithm=ALGORITHM)
     return token
+'''
 
 #access_token 디코딩->user_id 리턴
 def decode_access_token(token):
@@ -27,8 +41,8 @@ def decode_access_token(token):
 def create_refresh_token(user_id):
     payload={
         'user_id':user_id,
-        'exp':datetime.datetime.utcnow()+datetime.timedelta(days=30), #한 달 refresh 토큰 유지
-        'iat':datetime.datetime.utcnow()
+        'exp':datetime.now(timezone.utc)+datetime.timedelta(days=30), #한 달 refresh 토큰 유지
+        'iat':datetime.now(timezone.utc)
     }
     token=jwt.encode(payload,REFRESH_TOKEN_SECRET_KEY,algorithm=ALGORITHM)
     return token
