@@ -41,7 +41,7 @@ def decode_access_token(token):
 def create_refresh_token(user_id):
     payload={
         'user_id':user_id,
-        'exp':datetime.now(timezone.utc)+datetime.timedelta(days=30), #한 달 refresh 토큰 유지
+        'exp':datetime.now(timezone.utc)+timedelta(days=30), #한 달 refresh 토큰 유지
         'iat':datetime.now(timezone.utc)
     }
     token=jwt.encode(payload,REFRESH_TOKEN_SECRET_KEY,algorithm=ALGORITHM)
