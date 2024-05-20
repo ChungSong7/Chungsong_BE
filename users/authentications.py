@@ -7,14 +7,19 @@ from .models import User
 from django.shortcuts import get_object_or_404
 
 #access_token 생성
+
 def create_access_token(user_id):
-    payload={
+    try:
+        payload={
         'user_id': user_id,
         'exp': datetime.now(timezone.utc) + timedelta(minutes=180), # 3시간 access 토큰 유지
         'iat': datetime.now(timezone.utc)
-    }
-    token = jwt.encode(payload, ACCESS_TOKEN_SECRET_KEY, algorithm=ALGORITHM)
-    return token
+        }
+        token = jwt.encode(payload, ACCESS_TOKEN_SECRET_KEY, algorithm=ALGORITHM)
+        return token
+    except Exception as e:
+        print(f"Error creating access token: {e}")
+        raise
 
 '''
 #access_token 생성
