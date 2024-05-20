@@ -21,19 +21,6 @@ def create_access_token(user_id):
         print(f"Error creating access token: {e}")
         raise
 
-'''
-#access_token 생성
-def create_access_token(user_id):
-    payload={
-        'user_id':user_id,
-        'exp':datetime.datetime.utcnow()+datetime.timedelta(minutes=180), #3시간 access 토큰 유지
-        'iat':datetime.datetime.utcnow()
-    }
-    #datetime.datetime.utcnow()->datetime.datetime.now(timezone.utc) python version
-    token=jwt.encode(payload,ACCESS_TOKEN_SECRET_KEY,algorithm=ALGORITHM)
-    return token
-'''
-
 #access_token 디코딩->user_id 리턴
 def decode_access_token(token):
     try:
@@ -44,13 +31,18 @@ def decode_access_token(token):
 
 #refresh_token 생성
 def create_refresh_token(user_id):
-    payload={
-        'user_id':user_id,
-        'exp':datetime.now(timezone.utc)+timedelta(days=30), #한 달 refresh 토큰 유지
-        'iat':datetime.now(timezone.utc)
-    }
-    token=jwt.encode(payload,REFRESH_TOKEN_SECRET_KEY,algorithm=ALGORITHM)
-    return token
+    try:
+        payload={
+            'user_id':user_id,
+            'exp':datetime.now(timezone.utc)+timedelta(days=30), #한 달 refresh 토큰 유지
+            'iat':datetime.now(timezone.utc)
+        }
+        token=jwt.encode(payload,REFRESH_TOKEN_SECRET_KEY,algorithm=ALGORITHM)
+        return token
+    except Exception as e:
+        print(f"Error creating refresh token: {e}")
+        raise
+
 
 #refresh_token 디코딩 -> user_id 리턴
 def decode_refresh_token(token):
