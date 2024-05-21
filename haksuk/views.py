@@ -62,10 +62,13 @@ class MenuView(APIView):
                 selected_menu[date_str] = menu_dict[date_str]
         return Response(selected_menu)
 
+
+from config.settings import MEDIA_URL,MEDIA_ROOT
 class TestView(APIView):
     def get(self, request):
         user=User.objects.get(email='admin2@gmail.com')
-        return Response({'DB 서버 통신 완료 : ':user.email})
+        #return Response({'DB 서버 통신 완료 : ':user.email})
+        return Response({"MEDIA_URL":MEDIA_URL, "MEDIA_ROOT":MEDIA_ROOT})
     
     def post(self, request):
         data1=request.data['data1']
