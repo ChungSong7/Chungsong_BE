@@ -146,12 +146,19 @@ class FreezeView(APIView):
     
     #정지 이력 조회
     def get(self,request,user_id,*args, **kwargs):
+        print("1 ok")
         user_id=self.kwargs['user_id'] #path patameter 
+        print("2 ok")
         user = get_object_or_404(User, user_id=user_id)
+        print("3 ok")
         queryset = FreezeHistory.objects.filter(user=user).order_by('-created_at')
+        print("4 ok")
         paginator = CustomCursorPagination()
+        print("5 ok")
         paginated_queryset = paginator.paginate_queryset(queryset, request)
+        print("6 ok")
         serializer = FrozenHistorySerializer(paginated_queryset, many=True)
+        print("7 ok")
         return paginator.get_paginated_response(serializer.data)
 
 class AdminDeleteView(APIView):
