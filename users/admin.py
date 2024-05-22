@@ -18,6 +18,14 @@ class EmailVarifyAdmin(admin.ModelAdmin):
     list_display = ['email_varify_id','email','code','created_at']
 
 
+from users.serializers import NoticeSerializer
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
-    list_display=['notice_id','user','root_id','category','created_at','checked']
+    list_display=['notice_id','user','root_id','category','created_at','checked','get_content']
+
+    def get_content(self, obj):
+        # NoticeSerializer의 get_content 메서드를 호출하여 값을 얻습니다.
+        serializer = NoticeSerializer()
+        return serializer.get_content(obj)
+
+    get_content.short_description = 'Content'
