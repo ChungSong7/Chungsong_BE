@@ -240,7 +240,7 @@ class NoticeSerializer(serializers.ModelSerializer):
             try:
                 comment=Comment.objects.get(comment_id=instance.root_id)
                 #get_object_or_404(Comment,comment_id=instance.root_id)
-                return comment.comment_id
+                return comment.post.post_id 
             except Comment.DoesNotExist:
                 return None
         elif instance.category == '정지':

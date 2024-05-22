@@ -170,10 +170,14 @@ class AdminDeleteView(APIView):
 
         if post_id and not comment_id:
             post=get_object_or_404(Post,post_id=post_id)
+            notice=get_object_or_404(Notice,root_id=post_id)
+            notice.delete()
             post.delete()
             return Response({'message':'게시글이 완전 삭제되었습니다.'})
         elif not post_id and comment_id:
             comment=get_object_or_404(Comment,comment_id=comment_id)
+            notice=get_object_or_404(Notice,root_id=comment_id)
+            notice.delete()
             #게시글의 댓글 수 재조정
             post=comment.post
             comment.delete()
