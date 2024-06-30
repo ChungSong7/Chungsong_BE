@@ -11,6 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from posts.views import is_exist
 from boards.permissions import IsUser
 from boards.paginations import CustomCursorPagination,CommentCursorPagination
+from users.models import Notice
 
 from django.db.models import Q
 #list -> qeuryset (Comment)
@@ -163,6 +164,7 @@ class CommentDetailView(RetrieveUpdateDestroyAPIView):
         if comment.writer == user or user.status=='관리자':
             comment.display = False  # display 필드를 False로 변경
             comment.save()
+            Notice.objects.filter(root_id=comment_id).delete() #rood_id comment_id랑 같은 Notice 객체 삭제
         else:
             return Response({'message':'너 본인 아닌데 어케 접근했냐?'})
         #게시글 댓글 수 조정
