@@ -90,6 +90,7 @@ class PostView(RetrieveUpdateDestroyAPIView):
         if post.author == user or user.status=='관리자':
             post.display = False  # display 필드를 False로 변경
             post.save()
+            Notice.objects.filter(root_id=post_id).delete() #rood_id post_id랑 같은 Notice 객체 삭제
             return Response({"message":"게시글이 삭제되었습니다."},status=status.HTTP_200_OK)
         else:
             return Response({"message":"게시글 본인이 아닌데 삭제 어떻게 접근하셨니?"},status=status.HTTP_200_OK)
